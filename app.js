@@ -500,48 +500,134 @@ function renderWeekGrid() {
     weekSessions = weekSessions.filter(s => s.subjectId === AppState.filterSubject);
   }
 
-  // 2. Render Desktop Slot Rows: Linh hoạt theo từng tuần
-  let slotKeys = ['1-5', '6-7', '8-10', '11-12'];
+  // 2. Render Desktop Slot Rows: Linh hoạt và cân đối theo từng tuần
+  let slotRows = [];
   if (AppState.currentWeek <= 6) {
-    slotKeys = ['1-5', '6-7', '8-10', '11-12']; // GĐ 1
+    // Giai đoạn 1 (Tuần 1 - 6)
+    slotRows = [
+      {
+        name: "Tiết 1 – 5",
+        timeRange: "07:30 – 11:45",
+        details: "Tiết sáng (Trống / Nghỉ)",
+        matcher: s => s.slotKey === '1-5'
+      },
+      {
+        name: "Ca đầu: Slot 6 – 7",
+        timeRange: "12:30 – 14:15",
+        details: "Tiết 6: 12:30–13:20 | Tiết 7: 13:25–14:15",
+        matcher: s => s.slotKey === '6-7'
+      },
+      {
+        name: "Ca sau: Slot 8 – 10",
+        timeRange: "14:25 – 17:05",
+        details: "Tiết 8: 14:25–15:15 | Tiết 9: 15:20–16:10 | Tiết 10: 16:15–17:05",
+        matcher: s => s.slotKey === '8-10'
+      },
+      {
+        name: "Tiết 11 – 12",
+        timeRange: "17:30 – 19:05",
+        details: "Tiết tối (Trống / Nghỉ)",
+        matcher: s => s.slotKey === '11-12'
+      }
+    ];
   } else if (AppState.currentWeek === 7) {
-    slotKeys = ['1-5', '6-7', '8-10', '6-8', '9-10', '11-12']; // Tuần giao thoa GĐ1 và GĐ2
+    // Tuần 7: Chuyển giao GĐ1 ➔ GĐ2 (Gộp 2 ca chiều gọn gàng, đẹp mắt)
+    slotRows = [
+      {
+        name: "Tiết 1 – 5",
+        timeRange: "07:30 – 11:45",
+        details: "Tiết sáng (Trống / Nghỉ)",
+        matcher: s => s.slotKey === '1-5'
+      },
+      {
+        name: "Ca đầu: Tiết 6–7 / 6–8",
+        timeRange: "12:30 – 14:15 / 15:15",
+        details: "GĐ1: Slot 6–7 (12:30–14:15) | GĐ2: Tiết 6–8 (12:30–15:15)",
+        matcher: s => s.slotKey === '6-7' || s.slotKey === '6-8'
+      },
+      {
+        name: "Ca sau: Tiết 8–10 / 9–10",
+        timeRange: "14:25 / 15:20 – 17:05",
+        details: "GĐ1: Slot 8–10 (14:25–17:05) | GĐ2: Tiết 9–10 (15:20–17:05)",
+        matcher: s => s.slotKey === '8-10' || s.slotKey === '9-10'
+      },
+      {
+        name: "Tiết 11 – 12",
+        timeRange: "17:30 – 19:05",
+        details: "Tiết tối (Trống / Nghỉ)",
+        matcher: s => s.slotKey === '11-12'
+      }
+    ];
   } else {
-    slotKeys = ['1-5', '6-8', '9-10', '11-12']; // GĐ 2
+    // Giai đoạn 2 (Tuần 8 - 16)
+    slotRows = [
+      {
+        name: "Tiết 1 – 5",
+        timeRange: "07:30 – 11:45",
+        details: "Tiết sáng (Trống / Nghỉ)",
+        matcher: s => s.slotKey === '1-5'
+      },
+      {
+        name: "Ca đầu: Tiết 6 – 8",
+        timeRange: "12:30 – 15:15",
+        details: "Tiết 6: 12:30–13:20 | Tiết 7: 13:25–14:15 | Tiết 8: 14:25–15:15",
+        matcher: s => s.slotKey === '6-8'
+      },
+      {
+        name: "Ca sau: Tiết 9 – 10",
+        timeRange: "15:20 – 17:05",
+        details: "Tiết 9: 15:20–16:10 | Tiết 10: 16:15–17:05",
+        matcher: s => s.slotKey === '9-10'
+      },
+      {
+        name: "Tiết 11 – 12",
+        timeRange: "17:30 – 19:05",
+        details: "Tiết tối (Trống / Nghỉ)",
+        matcher: s => s.slotKey === '11-12'
+      }
+    ];
   }
+
   let bodyHtml = '';
 
-  slotKeys.forEach(slotKey => {
-    const slotDef = SCHEDULE_CONFIG.slots[slotKey];
+  slotRows.forEach(rowDef => {
     bodyHtml += `<tr>`;
 
     // Slot Left Info
     bodyHtml += `
       <td class="slot-info-cell">
-        <span class="slot-badge-name">${slotDef.name}</span>
-        <span class="slot-time-range">${slotDef.timeRange}</span>
-        ${slotDef.slotDetails ? `<div class="slot-sub-breakdown">${slotDef.slotDetails}</div>` : `<div class="slot-sub-breakdown">${slotDef.description}</div>`}
+        <span class="slot-badge-name">${rowDef.name}</span>
+        <span class="slot-time-range">${rowDef.timeRange}</span>
+        <div class="slot-sub-breakdown">${rowDef.details}</div>
       </td>
     `;
 
     // 7 Day Cells
     daysInfo.forEach(day => {
       const isToday = day.dateStr === simulatedDateStr;
-      const matchedSession = weekSessions.find(s => s.date === day.dateStr && s.slotKey === slotKey);
+      const matchedSession = weekSessions.find(s => s.date === day.dateStr && rowDef.matcher(s));
 
       if (matchedSession) {
         const sub = DataUtils.getSubjectInfo(matchedSession.subjectId);
         bodyHtml += `
           <td class="slot-cell ${isToday ? 'is-today' : ''}">
-            <div class="class-card" data-subject="${sub.id}" data-session-id="${matchedSession.id}" onclick="openSessionModal('${matchedSession.id}')">
-              <div class="card-top">
-                <span class="card-icon">${sub.icon}</span>
-                <span class="card-phase-tag">GĐ ${matchedSession.phase}</span>
+            <div class="class-card phase-${matchedSession.phase}" 
+                 data-subject="${sub.id}" 
+                 data-session-id="${matchedSession.id}" 
+                 onclick="openSessionModal('${matchedSession.id}')">
+              <div>
+                <div class="card-top">
+                  <div class="card-icon-box" style="background: ${sub.lightBg}; border: 1px solid ${sub.borderColor};">
+                    ${sub.icon}
+                  </div>
+                  <span class="card-phase-tag phase-${matchedSession.phase}">GĐ ${matchedSession.phase}</span>
+                </div>
+                <div class="card-subject-name" title="${sub.name}">${sub.name}</div>
+                <div class="card-slot-pill">${matchedSession.slotName}</div>
               </div>
-              <div class="card-subject-name">${sub.name}</div>
               <div class="card-bottom">
                 <span class="room-badge">📍 ${matchedSession.room}</span>
-                <span class="card-time-badge">⏰ ${matchedSession.startTime}</span>
+                <span class="card-time-badge">⏰ ${matchedSession.startTime} – ${matchedSession.endTime}</span>
               </div>
             </div>
           </td>

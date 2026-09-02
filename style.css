@@ -50,6 +50,22 @@
   --qlcv-bg: rgba(217, 119, 6, 0.12);
   --qlcv-border: rgba(245, 158, 11, 0.4);
 
+  /* Giai đoạn 2 Subjects */
+  --tcc-gradient: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+  --tcc-glow: rgba(37, 99, 235, 0.35);
+  --tcc-bg: rgba(37, 99, 235, 0.13);
+  --tcc-border: rgba(59, 130, 246, 0.45);
+
+  --thml-gradient: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  --thml-glow: rgba(5, 150, 105, 0.35);
+  --thml-bg: rgba(5, 150, 105, 0.13);
+  --thml-border: rgba(16, 185, 129, 0.45);
+
+  --thdc-gradient: linear-gradient(135deg, #7c3aed 0%, #c026d3 100%);
+  --thdc-glow: rgba(124, 58, 237, 0.35);
+  --thdc-bg: rgba(124, 58, 237, 0.13);
+  --thdc-border: rgba(139, 92, 246, 0.45);
+
   /* Shadows & Glows */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
@@ -98,6 +114,9 @@
   --pbdp-bg: rgba(5, 150, 105, 0.08);
   --nckh-bg: rgba(124, 58, 237, 0.08);
   --qlcv-bg: rgba(217, 119, 6, 0.08);
+  --tcc-bg: rgba(37, 99, 235, 0.08);
+  --thml-bg: rgba(5, 150, 105, 0.08);
+  --thdc-bg: rgba(124, 58, 237, 0.08);
 }
 
 /* ==========================================================================
@@ -210,6 +229,15 @@ body {
   color: #818cf8;
   border: 1px solid rgba(99, 102, 241, 0.3);
 }
+
+/* Subject Specific Badges */
+.badge-ai { background: rgba(79, 70, 229, 0.18); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.4); }
+.badge-pb { background: rgba(5, 150, 105, 0.18); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
+.badge-nckh { background: rgba(124, 58, 237, 0.18); color: #d8b4fe; border: 1px solid rgba(139, 92, 246, 0.4); }
+.badge-qlcv { background: rgba(217, 119, 6, 0.18); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.4); }
+.badge-tcc { background: rgba(37, 99, 235, 0.18); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.4); }
+.badge-thml { background: rgba(5, 150, 105, 0.18); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
+.badge-thdc { background: rgba(124, 58, 237, 0.18); color: #d8b4fe; border: 1px solid rgba(139, 92, 246, 0.4); }
 
 .brand-meta {
   display: flex;
@@ -729,8 +757,8 @@ body {
 /* Table Slot Content Cells */
 .slot-cell {
   padding: 0.65rem;
-  height: 140px;
-  min-height: 140px;
+  min-height: 165px;
+  height: 165px;
   transition: background var(--transition-fast);
   position: relative;
 }
@@ -759,7 +787,7 @@ body {
 .class-card {
   height: 100%;
   border-radius: var(--radius-md);
-  padding: 0.75rem 0.85rem;
+  padding: 0.85rem 0.95rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -767,100 +795,211 @@ body {
   position: relative;
   overflow: hidden;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
-  border: 1px solid transparent;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-sm);
+}
+
+.class-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3.5px;
+  opacity: 0.95;
 }
 
 .class-card:hover {
-  transform: translateY(-3px) scale(1.02);
+  transform: translateY(-3px) scale(1.015);
   box-shadow: var(--shadow-md);
   z-index: 5;
 }
 
-/* Card Themes */
+/* Card Themes Giai đoạn 1 */
 .class-card[data-subject="TTNT"] {
   background: var(--ai-bg);
   border-color: var(--ai-border);
 }
+.class-card[data-subject="TTNT"]::before {
+  background: var(--ai-gradient);
+}
 .class-card[data-subject="TTNT"]:hover {
-  box-shadow: 0 8px 25px var(--ai-glow);
+  box-shadow: 0 10px 28px var(--ai-glow);
 }
 
 .class-card[data-subject="TDPB"] {
   background: var(--pbdp-bg);
   border-color: var(--pbdp-border);
 }
+.class-card[data-subject="TDPB"]::before {
+  background: var(--pbdp-gradient);
+}
 .class-card[data-subject="TDPB"]:hover {
-  box-shadow: 0 8px 25px var(--pbdp-glow);
+  box-shadow: 0 10px 28px var(--pbdp-glow);
 }
 
 .class-card[data-subject="NCKH"] {
   background: var(--nckh-bg);
   border-color: var(--nckh-border);
 }
+.class-card[data-subject="NCKH"]::before {
+  background: var(--nckh-gradient);
+}
 .class-card[data-subject="NCKH"]:hover {
-  box-shadow: 0 8px 25px var(--nckh-glow);
+  box-shadow: 0 10px 28px var(--nckh-glow);
 }
 
 .class-card[data-subject="QLCV"] {
   background: var(--qlcv-bg);
   border-color: var(--qlcv-border);
 }
+.class-card[data-subject="QLCV"]::before {
+  background: var(--qlcv-gradient);
+}
 .class-card[data-subject="QLCV"]:hover {
-  box-shadow: 0 8px 25px var(--qlcv-glow);
+  box-shadow: 0 10px 28px var(--qlcv-glow);
 }
 
+/* Card Themes Giai đoạn 2 (Toán cao cấp, Triết học Mác - Lênin, Tin học) */
+.class-card[data-subject="TCC"] {
+  background: var(--tcc-bg);
+  border-color: var(--tcc-border);
+}
+.class-card[data-subject="TCC"]::before {
+  background: var(--tcc-gradient);
+}
+.class-card[data-subject="TCC"]:hover {
+  box-shadow: 0 10px 28px var(--tcc-glow);
+}
+
+.class-card[data-subject="THML"] {
+  background: var(--thml-bg);
+  border-color: var(--thml-border);
+}
+.class-card[data-subject="THML"]::before {
+  background: var(--thml-gradient);
+}
+.class-card[data-subject="THML"]:hover {
+  box-shadow: 0 10px 28px var(--thml-glow);
+}
+
+.class-card[data-subject="THDC"] {
+  background: var(--thdc-bg);
+  border-color: var(--thdc-border);
+}
+.class-card[data-subject="THDC"]::before {
+  background: var(--thdc-gradient);
+}
+.class-card[data-subject="THDC"]:hover {
+  box-shadow: 0 10px 28px var(--thdc-glow);
+}
+
+/* Card Internal Layout */
 .card-top {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
 }
 
-.card-icon {
-  font-size: 1.25rem;
+.card-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  flex-shrink: 0;
 }
 
 .card-phase-tag {
-  font-size: 0.65rem;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
-  padding: 0.1rem 0.4rem;
-  border-radius: var(--radius-sm);
-  background: rgba(0, 0, 0, 0.25);
-  color: var(--text-secondary);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.04em;
+}
+
+.card-phase-tag.phase-1 {
+  background: rgba(99, 102, 241, 0.22);
+  color: #c7d2fe;
+  border: 1px solid rgba(99, 102, 241, 0.4);
+}
+
+.card-phase-tag.phase-2 {
+  background: rgba(14, 165, 233, 0.22);
+  color: #bae6fd;
+  border: 1px solid rgba(14, 165, 233, 0.4);
 }
 
 .card-subject-name {
-  font-weight: 700;
-  font-size: 0.875rem;
+  font-weight: 800;
+  font-size: 0.92rem;
   color: var(--text-primary);
-  line-height: 1.3;
-  margin: 0.35rem 0;
+  line-height: 1.35;
+  margin: 0.45rem 0 0.25rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-slot-pill {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.12rem 0.45rem;
+  border-radius: var(--radius-sm);
+  width: fit-content;
+  margin-bottom: 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .card-bottom {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  padding-top: 0.4rem;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-top: 0.45rem;
   border-top: 1px solid var(--border-subtle);
 }
 
 .room-badge {
   font-family: var(--font-mono);
-  font-weight: 600;
+  font-weight: 700;
   color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  width: fit-content;
 }
 
 .card-time-badge {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  opacity: 0.85;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+  width: fit-content;
 }
 
 /* ==========================================================================
@@ -1415,6 +1554,21 @@ body {
 .mobile-session-item[data-subject="QLCV"] {
   background: var(--qlcv-bg);
   border-color: var(--qlcv-border);
+}
+
+.mobile-session-item[data-subject="TCC"] {
+  background: var(--tcc-bg);
+  border-color: var(--tcc-border);
+}
+
+.mobile-session-item[data-subject="THML"] {
+  background: var(--thml-bg);
+  border-color: var(--thml-border);
+}
+
+.mobile-session-item[data-subject="THDC"] {
+  background: var(--thdc-bg);
+  border-color: var(--thdc-border);
 }
 
 .mobile-session-top {
