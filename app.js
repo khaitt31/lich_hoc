@@ -10,8 +10,8 @@ const AppState = {
   theme: localStorage.getItem('app_theme') || 'dark',
   simulatedDateTime: new Date(),
   isManualSimulated: false,
-  calYear: new Date().getFullYear() === 2026 ? 2026 : 2026,
-  calMonth: (new Date().getFullYear() === 2026 && new Date().getMonth() >= 8 && new Date().getMonth() <= 9) ? new Date().getMonth() : 8,
+  calYear: 2026,
+  calMonth: (new Date().getFullYear() === 2026 && new Date().getMonth() >= 8 && new Date().getMonth() <= 11) ? new Date().getMonth() : 8,
   activeModalSession: null
 };
 
@@ -86,6 +86,7 @@ const DOM = {
   modalSubjectCode: document.getElementById('modalSubjectCode'),
   modalDateTime: document.getElementById('modalDateTime'),
   modalSlotDetails: document.getElementById('modalSlotDetails'),
+  modalClassDetails: document.getElementById('modalClassDetails'),
   modalRoomDetails: document.getElementById('modalRoomDetails'),
   modalNotes: document.getElementById('modalNotes'),
   btnModalJumpToWeek: document.getElementById('btnModalJumpToWeek'),
@@ -255,9 +256,9 @@ function updateLiveHero() {
     DOM.nextSubjectAvatar.style.background = "linear-gradient(135deg, #10b981, #06b6d4)";
     DOM.nextSlotBadge.textContent = "Hoàn tất";
     DOM.nextTimeBadge.textContent = "Học kỳ 1";
-    DOM.nextRoomBadge.textContent = "HT A601-HL";
+    DOM.nextRoomBadge.textContent = "Hòa Lạc";
     DOM.countdownLabel.textContent = "Trạng thái:";
-    DOM.countdownTimer.textContent = "Đã hoàn thành 35 buổi học";
+    DOM.countdownTimer.textContent = "Đã hoàn thành toàn bộ 91 buổi học";
     return;
   }
 
@@ -269,7 +270,8 @@ function updateLiveHero() {
   DOM.nextSubjectTitle.textContent = subInfo.name;
   DOM.nextSlotBadge.textContent = session.slotName;
   DOM.nextTimeBadge.textContent = `${session.startTime} – ${session.endTime}`;
-  DOM.nextRoomBadge.textContent = session.room;
+  const classPill = session.phase === 1 ? "Ghép CQ64.05.04 (134 SV)" : "CQ64.09.01.01+02 (91 SV)";
+  DOM.nextRoomBadge.textContent = `${session.room} • ${classPill}`;
 
   const [startH, startM] = session.startTime.split(':').map(Number);
   const [endH, endM] = session.endTime.split(':').map(Number);
@@ -358,14 +360,14 @@ function initEventListeners() {
 
   // Calendar month navigation
   DOM.btnCalPrev.addEventListener('click', () => {
-    if (AppState.calMonth > 7) { // Limit between Aug-Oct 2026
+    if (AppState.calMonth > 8) { // Limit between Sept-Dec 2026 (8=Sept, 9=Oct, 10=Nov, 11=Dec)
       AppState.calMonth--;
       renderCalendar();
     }
   });
 
   DOM.btnCalNext.addEventListener('click', () => {
-    if (AppState.calMonth < 9) {
+    if (AppState.calMonth < 11) {
       AppState.calMonth++;
       renderCalendar();
     }
@@ -498,8 +500,15 @@ function renderWeekGrid() {
     weekSessions = weekSessions.filter(s => s.subjectId === AppState.filterSubject);
   }
 
-  // 2. Render Desktop Slot Rows
-  const slotKeys = ['1-5', '6-7', '8-10', '11-12'];
+  // 2. Render Desktop Slot Rows: Linh hoạt theo từng tuần
+  let slotKeys = ['1-5', '6-7', '8-10', '11-12'];
+  if (AppState.currentWeek <= 6) {
+    slotKeys = ['1-5', '6-7', '8-10', '11-12']; // GĐ 1
+  } else if (AppState.currentWeek === 7) {
+    slotKeys = ['1-5', '6-7', '8-10', '6-8', '9-10', '11-12']; // Tuần giao thoa GĐ1 và GĐ2
+  } else {
+    slotKeys = ['1-5', '6-8', '9-10', '11-12']; // GĐ 2
+  }
   let bodyHtml = '';
 
   slotKeys.forEach(slotKey => {
@@ -892,7 +901,12 @@ function openSessionModal(sessionId) {
 
   DOM.modalDateTime.textContent = `${session.dayName}, ${formatShortDate(session.date)}/2026 (${session.startTime} – ${session.endTime})`;
   DOM.modalSlotDetails.textContent = `${session.slotName} (${(slot && (slot.slotDetails || slot.timeRange)) || ''})`;
-  DOM.modalRoomDetails.textContent = `${session.room} (${SCHEDULE_CONFIG.roomFullName})`;
+  if (DOM.modalClassDetails) {
+    DOM.modalClassDetails.textContent = session.phase === 1
+      ? "CQ64.09.01.01+02 ghép CQ64.05.04 (Sĩ số: 134 sinh viên)"
+      : "CQ64.09.01.01+02 (Sĩ số: 91 sinh viên - Lớp độc lập)";
+  }
+  DOM.modalRoomDetails.textContent = `${session.room} (${session.phase === 1 ? SCHEDULE_CONFIG.roomG1 : SCHEDULE_CONFIG.roomG2})`;
   DOM.modalNotes.textContent = sub.description;
 
   if (DOM.btnModalJumpToWeek) {
@@ -948,12 +962,16 @@ function copyModalInfoToClipboard() {
   const s = AppState.activeModalSession;
   const sub = DataUtils.getSubjectInfo(s.subjectId);
 
+  const classText = s.phase === 1
+    ? "CQ64.09.01.01+02 ghép CQ64.05.04 (134 SV)"
+    : "CQ64.09.01.01+02 (91 SV)";
+
   const text = `🎓 [LỊCH HỌC]\n` +
     `📖 Môn: ${sub.name}\n` +
     `📅 Ngày: ${s.dayName}, ${s.date}\n` +
     `⏰ Khung giờ: ${s.slotName} (${s.startTime} - ${s.endTime})\n` +
-    `📍 Phòng: ${s.room} (Hội trường A601 - Cơ sở Hòa Lạc)\n` +
-    `🏫 Lớp: ${SCHEDULE_CONFIG.classId}`;
+    `📍 Phòng: ${s.room}\n` +
+    `🏫 Lớp: ${classText}`;
 
   navigator.clipboard.writeText(text).then(() => {
     DOM.btnModalCopyInfo.textContent = '✅ Đã sao chép!';
