@@ -1,5 +1,5 @@
 /**
- * Dữ liệu Thời khóa biểu FAP - Học kỳ 9
+ * Dữ liệu Thời khóa biểu - Học kỳ 9
  * Lớp: CQ64.09.01 (01-02) / CQ64.05.04
  * Phòng học: HT A601-HL (Hội trường A601 - Cơ sở Hòa Lạc)
  */
@@ -12,7 +12,7 @@ const SCHEDULE_CONFIG = {
   startDate: "2026-08-31",
   endDate: "2026-10-13",
   
-  // Định nghĩa khung giờ Slot FAP
+  // Định nghĩa khung giờ Slot
   slots: {
     "1-5": {
       name: "Slot 1 – 5",
