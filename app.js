@@ -8,9 +8,10 @@ const AppState = {
   currentView: 'week',
   filterSubject: 'ALL',
   theme: localStorage.getItem('app_theme') || 'dark',
-  simulatedDateTime: new Date('2026-09-03T13:45:00'),
-  calYear: 2026,
-  calMonth: 8, // 8 = September (0-indexed: 8 is Sept, 9 is Oct)
+  simulatedDateTime: new Date(),
+  isManualSimulated: false,
+  calYear: new Date().getFullYear() === 2026 ? 2026 : 2026,
+  calMonth: (new Date().getFullYear() === 2026 && new Date().getMonth() >= 8 && new Date().getMonth() <= 9) ? new Date().getMonth() : 8,
   activeModalSession: null
 };
 
@@ -165,6 +166,7 @@ function updateSimulatedTimeFromInputs() {
     const [y, m, d] = dateVal.split('-').map(Number);
     const [h, min] = timeVal.split(':').map(Number);
     AppState.simulatedDateTime = new Date(y, m - 1, d, h, min, 0);
+    AppState.isManualSimulated = true;
     updateCurrentWeekFromDate(dateVal);
     renderAllViews();
     updateLiveHero();
@@ -185,6 +187,7 @@ function updateCurrentWeekFromDate(dateStr) {
 }
 
 function resetToCurrentTime() {
+  AppState.isManualSimulated = false;
   AppState.simulatedDateTime = new Date();
   const currentDateStr = getLocalDateString(AppState.simulatedDateTime);
   
@@ -217,8 +220,11 @@ function resetToCurrentTime() {
 
 function startLiveClock() {
   const updateTick = () => {
-    // Increment 1 second in simulated time
-    AppState.simulatedDateTime = new Date(AppState.simulatedDateTime.getTime() + 1000);
+    if (!AppState.isManualSimulated) {
+      AppState.simulatedDateTime = new Date();
+    } else {
+      AppState.simulatedDateTime = new Date(AppState.simulatedDateTime.getTime() + 1000);
+    }
     
     // Format live clock string
     const timeStr = AppState.simulatedDateTime.toLocaleTimeString('vi-VN');
