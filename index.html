@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Thời Khóa Biểu - Học kỳ 1 | Lớp CQ64.09.01 & CQ64.05.04</title>
+  <title>Thời Khóa Biểu - Học kỳ 1 (2026 - 2027) | CQ64.09.01.01+02</title>
   <meta name="description" content="Trang hiển thị thời khóa biểu đại học trực quan, hiện đại, hỗ trợ đếm ngược, lọc môn, xuất file lịch .ics cho Google/Apple Calendar.">
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
@@ -21,11 +21,11 @@
         <div class="brand-info">
           <h1>
             Thời Khóa Biểu
-            <span class="badge-semester">Kỳ 1 (2026)</span>
+            <span class="badge-semester">Học kỳ 1 (2026 - 2027)</span>
           </h1>
           <div class="brand-meta">
-            <span>🏫 <strong>Lớp:</strong> CQ64.09.01 (01-02) / CQ64.05.04</span>
-            <span>📍 <strong>Phòng:</strong> <span class="location-tag">HT A601-HL (Hòa Lạc)</span></span>
+            <span>🏫 <strong>Khóa lớp:</strong> <span class="location-tag">GĐ 1: Ghép CQ64.05.04 (134 SV)</span> <span class="location-tag">GĐ 2: CQ64.09.01.01+02 (91 SV)</span></span>
+            <span>📍 <strong>Phòng học:</strong> HT A601-HL (GĐ1) ➔ HT A702-HL (GĐ2)</span>
             <span>🕒 <span id="headerLiveClock">--:--:--</span></span>
           </div>
         </div>
@@ -57,7 +57,7 @@
         </div>
 
         <div class="next-class-body" id="nextClassContainer">
-          <div class="subject-avatar-lg" id="nextSubjectAvatar" style="background: var(--ai-gradient);">🤖</div>
+          <div class="subject-avatar-lg" id="nextSubjectAvatar" style="background: linear-gradient(135deg, #4f46e5, #06b6d4);">🤖</div>
           <div class="next-class-details">
             <h2 id="nextSubjectTitle">Đang tải lịch...</h2>
             <div class="next-class-tags">
@@ -78,23 +78,23 @@
       <div class="card-quick-stats">
         <div class="stat-item">
           <span class="stat-label">Tổng số buổi</span>
-          <span class="stat-value">35</span>
+          <span class="stat-value">91</span>
           <span class="stat-sub">Toàn bộ 2 giai đoạn</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">Số môn học</span>
-          <span class="stat-value">4</span>
-          <span class="stat-sub">2 môn / giai đoạn</span>
+          <span class="stat-value">7</span>
+          <span class="stat-sub">GĐ1: 4 môn • GĐ2: 3 môn</span>
         </div>
         <div class="stat-item">
-          <span class="stat-label">Thời gian kỳ học</span>
-          <span class="stat-value" style="font-size: 1.05rem;">31/08 – 13/10</span>
-          <span class="stat-sub">7 tuần học</span>
+          <span class="stat-label">Thời gian toàn kỳ</span>
+          <span class="stat-value" style="font-size: 1.05rem;">31/08 – 17/12</span>
+          <span class="stat-sub">16 tuần học</span>
         </div>
         <div class="stat-item">
-          <span class="stat-label">Khung giờ</span>
-          <span class="stat-value" style="font-size: 1.05rem;">Tiết Chiều</span>
-          <span class="stat-sub">Slot 6-7 & 8-10</span>
+          <span class="stat-label">Buổi học</span>
+          <span class="stat-value" style="font-size: 1.05rem;">Chiều (C)</span>
+          <span class="stat-sub">HT A601 & HT A702</span>
         </div>
       </div>
     </section>
@@ -126,11 +126,18 @@
         </div>
 
         <select id="subjectFilterSelect" class="subject-filter-select" aria-label="Lọc theo môn học">
-          <option value="ALL">🔍 Tất cả môn</option>
-          <option value="TTNT">🤖 Trí tuệ nhân tạo (AI)</option>
-          <option value="TDPB">🧠 Kỹ năng tư duy PB & ĐP</option>
-          <option value="NCKH">🔬 Phương pháp NCKH</option>
-          <option value="QLCV">📊 Kỹ năng QL & TCCV</option>
+          <option value="ALL">🔍 Tất cả môn (7 môn - 91 buổi)</option>
+          <optgroup label="--- Giai đoạn 1 (31/08 - 13/10: HT A601-HL) ---">
+            <option value="TTNT">🤖 Trí tuệ nhân tạo (12 buổi)</option>
+            <option value="TDPB">🧠 Tư duy PB & đàm phán (6 buổi)</option>
+            <option value="NCKH">🔬 Phương pháp NCKH (11 buổi)</option>
+            <option value="QLCV">📊 Kỹ năng QL & TCCV (6 buổi)</option>
+          </optgroup>
+          <optgroup label="--- Giai đoạn 2 (14/10 - 17/12: HT A702-HL) ---">
+            <option value="TCC">📐 Toán cao cấp (19 buổi)</option>
+            <option value="THML">📜 Triết học Mác - Lênin (18 buổi)</option>
+            <option value="THDC">💻 Tin học (19 buổi)</option>
+          </optgroup>
         </select>
       </div>
     </nav>
@@ -149,7 +156,7 @@
             
             <!-- Mobile Day Quick Filter / Selector -->
             <div class="mobile-day-selector" id="mobileDaySelector">
-              <!-- Day buttons (T2, T3, T4, T5, T6, T7, CN) generated by JS -->
+              <!-- Day buttons generated by JS -->
             </div>
 
             <div class="week-tip-text">
@@ -172,7 +179,7 @@
                 </tr>
               </thead>
               <tbody id="gridBody">
-                <!-- Slot 1-5, Slot 6-7, Slot 8-10, Slot 11-12 rows injected via JS -->
+                <!-- Slot rows injected via JS -->
               </tbody>
             </table>
           </div>
@@ -219,7 +226,7 @@
       ⏱️ <span class="sim-toggle-text">Giả lập ngày</span>
     </button>
     <div class="sim-content-wrapper" id="simContentWrapper">
-      <input type="date" id="simDateInput" class="sim-input" min="2026-08-31" max="2026-10-18">
+      <input type="date" id="simDateInput" class="sim-input" min="2026-08-31" max="2026-12-20">
       <input type="time" id="simTimeInput" class="sim-input">
       <button id="btnResetSimTime" class="btn btn-secondary sim-reset-btn">
         🔄 Hiện tại
@@ -244,6 +251,10 @@
         <div class="modal-field-group">
           <span class="modal-field-label">⏰ Slot học chi tiết</span>
           <div class="modal-field-value" id="modalSlotDetails">Slot 8 – 10 (Slot 8: 14:25-15:15 | Slot 9: 15:20-16:10 | Slot 10: 16:15-17:05)</div>
+        </div>
+        <div class="modal-field-group">
+          <span class="modal-field-label">🏫 Khóa lớp & Sĩ số</span>
+          <div class="modal-field-value" id="modalClassDetails">CQ64.09.01.01+02 (91 SV)</div>
         </div>
         <div class="modal-field-group">
           <span class="modal-field-label">📍 Địa điểm & Phòng học</span>
