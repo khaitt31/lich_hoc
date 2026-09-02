@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thời Khóa Biểu FAP - Học kỳ 9 | Lớp CQ64.09.01 & CQ64.05.04</title>
+  <meta name="description" content="Trang hiển thị thời khóa biểu đại học chuẩn FAP trực quan, hiện đại, hỗ trợ đếm ngược, lọc môn, xuất file lịch .ics cho Google/Apple Calendar.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- TOP HEADER -->
+    <header class="header-card">
+      <div class="brand-section">
+        <div class="brand-icon">
+          🎓
+        </div>
+        <div class="brand-info">
+          <h1>
+            Thời Khóa Biểu FAP
+            <span class="badge-semester">Kỳ 9 (2026)</span>
+          </h1>
+          <div class="brand-meta">
+            <span>🏫 <strong>Lớp:</strong> CQ64.09.01 (01-02) / CQ64.05.04</span>
+            <span>📍 <strong>Phòng:</strong> <span class="location-tag">HT A601-HL (Hòa Lạc)</span></span>
+            <span>🕒 <span id="headerLiveClock">--:--:--</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="btnExportIcs" class="btn btn-primary" title="Xuất toàn bộ lịch sang Google Calendar / Apple Calendar">
+          📥 Xuất Lịch (.ics)
+        </button>
+        <button id="btnPrint" class="btn btn-secondary" title="In hoặc lưu PDF lịch học">
+          🖨️ In Lịch
+        </button>
+        <button id="btnThemeToggle" class="btn btn-secondary btn-icon-only" title="Đổi giao diện Sáng / Tối">
+          🌙
+        </button>
+      </div>
+    </header>
+
+    <!-- LIVE HERO STATUS & STATS -->
+    <section class="hero-tracker">
+      <!-- Live / Next Class Card -->
+      <div class="card-live-status">
+        <div class="status-header">
+          <div class="live-indicator">
+            <span class="pulse-dot"></span>
+            <span id="liveStatusLabel">Đang cập nhật...</span>
+          </div>
+          <div class="date-display" id="currentSimulatedDateStr">--/--/2026</div>
+        </div>
+
+        <div class="next-class-body" id="nextClassContainer">
+          <div class="subject-avatar-lg" id="nextSubjectAvatar" style="background: var(--ai-gradient);">🤖</div>
+          <div class="next-class-details">
+            <h2 id="nextSubjectTitle">Đang tải lịch...</h2>
+            <div class="next-class-tags">
+              <span class="tag-badge" id="nextSlotBadge">Slot 8–10</span>
+              <span class="tag-badge" id="nextTimeBadge">14:25 – 17:05</span>
+              <span class="tag-badge" id="nextRoomBadge">HT A601-HL</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="countdown-box">
+          <span id="countdownLabel">Thời gian còn lại:</span>
+          <span class="countdown-digits" id="countdownTimer">-- giờ -- phút</span>
+        </div>
+      </div>
+
+      <!-- Quick Stats Card -->
+      <div class="card-quick-stats">
+        <div class="stat-item">
+          <span class="stat-label">Tổng số buổi</span>
+          <span class="stat-value">35</span>
+          <span class="stat-sub">Toàn bộ 2 giai đoạn</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Số môn học</span>
+          <span class="stat-value">4</span>
+          <span class="stat-sub">2 môn / giai đoạn</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Thời gian kỳ học</span>
+          <span class="stat-value" style="font-size: 1.05rem;">31/08 – 13/10</span>
+          <span class="stat-sub">7 tuần học</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Khung giờ</span>
+          <span class="stat-value" style="font-size: 1.05rem;">Tiết Chiều</span>
+          <span class="stat-sub">Slot 6-7 & 8-10</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTROLS & FILTER BAR -->
+    <nav class="controls-bar">
+      <!-- View Switcher Tabs -->
+      <div class="view-tabs">
+        <button class="tab-btn active" data-view="week" title="Lưới theo tuần">
+          <span class="tab-icon">📅</span> <span class="tab-text">Lưới Tuần</span>
+        </button>
+        <button class="tab-btn" data-view="timeline" title="Dòng thời gian">
+          <span class="tab-icon">📋</span> <span class="tab-text">Dòng Thời Gian</span>
+        </button>
+        <button class="tab-btn" data-view="subjects" title="Theo môn học">
+          <span class="tab-icon">📚</span> <span class="tab-text">Môn Học</span>
+        </button>
+        <button class="tab-btn" data-view="calendar" title="Lịch tháng">
+          <span class="tab-icon">🗓️</span> <span class="tab-text">Lịch Tháng</span>
+        </button>
+      </div>
+
+      <!-- Week Navigator & Filter -->
+      <div class="filter-and-week">
+        <div class="week-navigator" id="weekNavGroup">
+          <button class="week-btn-nav" id="btnPrevWeek" aria-label="Tuần trước">◀</button>
+          <span class="current-week-label" id="currentWeekDisplay">Tuần 1 (31/08 - 06/09)</span>
+          <button class="week-btn-nav" id="btnNextWeek" aria-label="Tuần sau">▶</button>
+        </div>
+
+        <select id="subjectFilterSelect" class="subject-filter-select" aria-label="Lọc theo môn học">
+          <option value="ALL">🔍 Tất cả môn</option>
+          <option value="TTNT">🤖 Trí tuệ nhân tạo (AI)</option>
+          <option value="TDPB">🧠 Kỹ năng tư duy PB & ĐP</option>
+          <option value="NCKH">🔬 Phương pháp NCKH</option>
+          <option value="QLCV">📊 Kỹ năng QL & TCCV</option>
+        </select>
+      </div>
+    </nav>
+
+    <!-- MAIN VIEW CONTAINERS -->
+    <main id="mainContent">
+
+      <!-- 1. WEEK GRID VIEW -->
+      <section id="weekGridView" class="view-section">
+        <div class="week-grid-container">
+          <div class="week-info-strip">
+            <div class="week-title-wrapper">
+              <strong id="gridWeekHeading">Tuần 1: 31/08/2026 – 06/09/2026</strong>
+              <span class="phase-pill" id="gridPhasePill">Giai đoạn 1</span>
+            </div>
+            
+            <!-- Mobile Day Quick Filter / Selector -->
+            <div class="mobile-day-selector" id="mobileDaySelector">
+              <!-- Day buttons (T2, T3, T4, T5, T6, T7, CN) generated by JS -->
+            </div>
+
+            <div class="week-tip-text">
+              💡 <em>Nhấp vào buổi học để xem chi tiết & Google Calendar</em>
+            </div>
+          </div>
+
+          <!-- Mobile Cards View for the Week (Shown on Mobile) -->
+          <div class="mobile-week-cards" id="mobileWeekCards">
+            <!-- Mobile day cards injected via JS -->
+          </div>
+
+          <!-- Desktop Table Grid View (Shown on Desktop / Scrollable on Tablet) -->
+          <div class="timetable-table-wrapper desktop-grid-only">
+            <table class="timetable-grid">
+              <thead>
+                <tr id="gridHeaderRow">
+                  <th class="col-slot-header">Khung Slot / Tiết</th>
+                  <!-- Days injected via JS -->
+                </tr>
+              </thead>
+              <tbody id="gridBody">
+                <!-- Slot 1-5, Slot 6-7, Slot 8-10, Slot 11-12 rows injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. TIMELINE / AGENDA VIEW -->
+      <section id="timelineView" class="view-section" style="display: none;">
+        <div class="timeline-view" id="timelineContainer">
+          <!-- Timeline groups injected via JS -->
+        </div>
+      </section>
+
+      <!-- 3. SUBJECTS OVERVIEW MATRIX -->
+      <section id="subjectsView" class="view-section" style="display: none;">
+        <div class="subjects-matrix" id="subjectsMatrixContainer">
+          <!-- Subject cards injected via JS -->
+        </div>
+      </section>
+
+      <!-- 4. MONTHLY CALENDAR VIEW -->
+      <section id="calendarView" class="view-section" style="display: none;">
+        <div class="calendar-view">
+          <div class="calendar-header">
+            <h2 id="calMonthTitle" style="font-size: 1.2rem; font-weight: 800;">Tháng 09 / 2026</h2>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn btn-secondary btn-icon-only" id="btnCalPrev">◀</button>
+              <button class="btn btn-secondary btn-icon-only" id="btnCalNext">▶</button>
+            </div>
+          </div>
+          <div class="calendar-month-grid" id="calendarGrid">
+            <!-- Calendar day cells injected via JS -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- FLOATING TIME TRAVEL SIMULATOR -->
+  <aside class="time-simulator-bar" id="timeSimulatorBar">
+    <button id="btnToggleSimBar" class="sim-toggle-pill" title="Mở / Đóng công cụ giả lập thời gian">
+      ⏱️ <span class="sim-toggle-text">Giả lập ngày</span>
+    </button>
+    <div class="sim-content-wrapper" id="simContentWrapper">
+      <input type="date" id="simDateInput" class="sim-input" min="2026-08-31" max="2026-10-18" value="2026-09-03">
+      <input type="time" id="simTimeInput" class="sim-input" value="14:00">
+      <button id="btnResetSimTime" class="btn btn-secondary sim-reset-btn">
+        🔄 Hiện tại
+      </button>
+    </div>
+  </aside>
+
+  <!-- DETAIL MODAL DIALOG -->
+  <div class="modal-overlay" id="sessionModal">
+    <div class="modal-content">
+      <div class="modal-banner" id="modalBanner">
+        <button class="modal-close-btn" id="modalCloseBtn">✕</button>
+        <span style="font-size: 2rem;" id="modalIcon">🤖</span>
+        <h3 id="modalSubjectName" style="font-size: 1.3rem; font-weight: 800; margin-top: 0.5rem;">Trí tuệ nhân tạo</h3>
+        <p id="modalSubjectCode" style="font-size: 0.85rem; opacity: 0.9;">Mã môn: AI_001 | Giai đoạn 1</p>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field-group">
+          <span class="modal-field-label">📅 Thời gian & Ngày học</span>
+          <div class="modal-field-value" id="modalDateTime">Thứ Năm, 03/09/2026 (14:25 – 17:05)</div>
+        </div>
+        <div class="modal-field-group">
+          <span class="modal-field-label">⏰ Slot học chi tiết</span>
+          <div class="modal-field-value" id="modalSlotDetails">Slot 8 – 10 (Slot 8: 14:25-15:15 | Slot 9: 15:20-16:10 | Slot 10: 16:15-17:05)</div>
+        </div>
+        <div class="modal-field-group">
+          <span class="modal-field-label">📍 Địa điểm & Phòng học</span>
+          <div class="modal-field-value" id="modalRoomDetails">HT A601-HL (Hội trường A601 - Cơ sở Hòa Lạc)</div>
+        </div>
+        <div class="modal-field-group">
+          <span class="modal-field-label">📝 Ghi chú môn</span>
+          <div class="modal-field-value" id="modalNotes" style="font-weight: normal; font-size: 0.875rem; color: var(--text-secondary);">--</div>
+        </div>
+        <div class="modal-actions">
+          <a id="btnModalGoogleCal" href="#" target="_blank" class="btn btn-primary" style="flex: 1;">
+            📅 Thêm vào Google Calendar
+          </a>
+          <button id="btnModalCopyInfo" class="btn btn-secondary">
+            📋 Sao chép
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
