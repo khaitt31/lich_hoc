@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Thời Khóa Biểu - Học kỳ 9 | Lớp CQ64.09.01 & CQ64.05.04</title>
+  <title>Thời Khóa Biểu - Học kỳ 1 | Lớp CQ64.09.01 & CQ64.05.04</title>
   <meta name="description" content="Trang hiển thị thời khóa biểu đại học trực quan, hiện đại, hỗ trợ đếm ngược, lọc môn, xuất file lịch .ics cho Google/Apple Calendar.">
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
@@ -21,7 +21,7 @@
         <div class="brand-info">
           <h1>
             Thời Khóa Biểu
-            <span class="badge-semester">Kỳ 9 (2026)</span>
+            <span class="badge-semester">Kỳ 1 (2026)</span>
           </h1>
           <div class="brand-meta">
             <span>🏫 <strong>Lớp:</strong> CQ64.09.01 (01-02) / CQ64.05.04</span>
@@ -254,8 +254,11 @@
           <div class="modal-field-value" id="modalNotes" style="font-weight: normal; font-size: 0.875rem; color: var(--text-secondary);">--</div>
         </div>
         <div class="modal-actions">
-          <a id="btnModalGoogleCal" href="#" target="_blank" class="btn btn-primary" style="flex: 1;">
-            📅 Thêm vào Google Calendar
+          <button id="btnModalJumpToWeek" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
+            🔍 Xem trên Lưới Tuần
+          </button>
+          <a id="btnModalGoogleCal" href="#" target="_blank" class="btn btn-primary" style="flex: 1; text-align: center;">
+            📅 Google Calendar
           </a>
           <button id="btnModalCopyInfo" class="btn btn-secondary">
             📋 Sao chép

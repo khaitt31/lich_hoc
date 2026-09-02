@@ -1,5 +1,5 @@
 /**
- * Dữ liệu Thời khóa biểu - Học kỳ 9
+ * Dữ liệu Thời khóa biểu - Học kỳ 1
  * Lớp: CQ64.09.01 (01-02) / CQ64.05.04
  * Phòng học: HT A601-HL (Hội trường A601 - Cơ sở Hòa Lạc)
  */
@@ -8,7 +8,7 @@ const SCHEDULE_CONFIG = {
   classId: "CQ64.09.01 (01-02) / CQ64.05.04",
   roomDefault: "HT A601-HL",
   roomFullName: "Hội trường A601 - Cơ sở Hòa Lạc",
-  semester: "Học kỳ 9 (Năm học 2026)",
+  semester: "Học kỳ 1 (Năm học 2026)",
   startDate: "2026-08-31",
   endDate: "2026-10-13",
   
@@ -744,6 +744,17 @@ const DataUtils = {
   // Lấy thông tin môn học
   getSubjectInfo(subjectId) {
     return SCHEDULE_CONFIG.subjects[subjectId] || null;
+  },
+
+  // Lấy thông tin khung giờ (slot)
+  getSlotInfo(slotKey) {
+    return SCHEDULE_CONFIG.slots[slotKey] || {
+      name: `Slot ${slotKey}`,
+      type: "afternoon",
+      timeRange: "",
+      slotDetails: "",
+      isAvailable: true
+    };
   },
 
   // Helper lấy chuỗi YYYY-MM-DD theo giờ địa phương
