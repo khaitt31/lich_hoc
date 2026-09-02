@@ -1,5 +1,5 @@
 /**
- * FAP TIMETABLE PRO - CORE LOGIC & INTERACTION ENGINE
+ * TIMETABLE PRO - CORE LOGIC & INTERACTION ENGINE
  */
 
 // Application State
@@ -7,7 +7,7 @@ const AppState = {
   currentWeek: 1,
   currentView: 'week',
   filterSubject: 'ALL',
-  theme: localStorage.getItem('fap_theme') || 'dark',
+  theme: localStorage.getItem('app_theme') || 'dark',
   simulatedDateTime: new Date('2026-09-03T13:45:00'),
   calYear: 2026,
   calMonth: 8, // 8 = September (0-indexed: 8 is Sept, 9 is Oct)
@@ -139,7 +139,7 @@ function initTheme() {
 
 function toggleTheme() {
   AppState.theme = AppState.theme === 'dark' ? 'light' : 'dark';
-  localStorage.setItem('fap_theme', AppState.theme);
+  localStorage.setItem('app_theme', AppState.theme);
   initTheme();
 }
 
@@ -890,7 +890,7 @@ function copyModalInfoToClipboard() {
   const s = AppState.activeModalSession;
   const sub = DataUtils.getSubjectInfo(s.subjectId);
 
-  const text = `🎓 [LỊCH HỌC FAP]\n` +
+  const text = `🎓 [LỊCH HỌC]\n` +
     `📖 Môn: ${sub.name}\n` +
     `📅 Ngày: ${s.dayName}, ${s.date}\n` +
     `⏰ Khung giờ: ${s.slotName} (${s.startTime} - ${s.endTime})\n` +
@@ -906,9 +906,9 @@ function copyModalInfoToClipboard() {
 }
 
 function generateGoogleCalendarUrl(session, subject) {
-  const title = encodeURIComponent(`[FAP] ${subject.name} - ${session.slotName}`);
+  const title = encodeURIComponent(`${subject.name} - ${session.slotName}`);
   const location = encodeURIComponent(`${session.room} (${SCHEDULE_CONFIG.roomFullName})`);
-  const details = encodeURIComponent(`Lịch học FAP - Học kỳ 9\nLớp: ${SCHEDULE_CONFIG.classId}\nKhung slot: ${session.slotName} (${session.startTime} - ${session.endTime})\nMôn: ${subject.name}`);
+  const details = encodeURIComponent(`Lịch học - Học kỳ 9\nLớp: ${SCHEDULE_CONFIG.classId}\nKhung slot: ${session.slotName} (${session.startTime} - ${session.endTime})\nMôn: ${subject.name}`);
 
   // Format UTC dates (Vietnam is UTC+7 -> subtract 7 hours for UTC)
   const [y, m, d] = session.date.split('-').map(Number);
@@ -933,10 +933,10 @@ function exportToIcsFile() {
   let icsContent = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//FAP Timetable Pro//VN',
+    'PRODID:-//Timetable Pro//VN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    'X-WR-CALNAME:Lich_Hoc_Ky9_FAP',
+    'X-WR-CALNAME:Lich_Hoc_Ky9',
     'X-WR-TIMEZONE:Asia/Ho_Chi_Minh'
   ];
 
@@ -951,7 +951,7 @@ function exportToIcsFile() {
 
     const formatUtcIso = (dObj) => dObj.toISOString().replace(/-|:|\.\d+/g, '');
 
-    const uid = `${session.id}_${session.date.replace(/-/g, '')}@fap.edu.vn`;
+    const uid = `${session.id}_${session.date.replace(/-/g, '')}@timetable.local`;
 
     icsContent.push(
       'BEGIN:VEVENT',
@@ -959,7 +959,7 @@ function exportToIcsFile() {
       `DTSTAMP:${formatUtcIso(new Date())}`,
       `DTSTART:${formatUtcIso(startUtc)}`,
       `DTEND:${formatUtcIso(endUtc)}`,
-      `SUMMARY:[FAP] ${sub.name} (${session.slotName})`,
+      `SUMMARY:${sub.name} (${session.slotName})`,
       `DESCRIPTION:Môn: ${sub.name}\\nKhung giờ: ${session.slotName} (${session.startTime} - ${session.endTime})\\nLớp: ${SCHEDULE_CONFIG.classId}\\nPhòng: ${session.room}`,
       `LOCATION:${session.room} - ${SCHEDULE_CONFIG.roomFullName}`,
       'STATUS:CONFIRMED',
@@ -977,7 +977,7 @@ function exportToIcsFile() {
   const blob = new Blob([icsContent.join('\r\n')], { type: 'text/calendar;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.setAttribute('download', 'Lich_Hoc_Ky9_FAP_CQ64.ics');
+  link.setAttribute('download', 'Lich_Hoc_Ky9_CQ64.ics');
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

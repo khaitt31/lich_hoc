@@ -1,5 +1,6 @@
 /* ==========================================================================
-   FAP TIMETABLE PRO - MODERN GLASSMORPHISM DESIGN SYSTEM
+   TIMETABLE PRO - MODERN GLASSMORPHISM DESIGN SYSTEM
+   Semester 9 Schedule
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
@@ -595,7 +596,7 @@ body {
 }
 
 /* ==========================================================================
-   VIEW 1: WEEKLY GRID VIEW (FAP REDESIGNED)
+   VIEW 1: WEEKLY GRID VIEW
    ========================================================================== */
 .week-grid-container {
   background: var(--bg-card);
