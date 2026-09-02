@@ -87,6 +87,7 @@ const DOM = {
   modalSlotDetails: document.getElementById('modalSlotDetails'),
   modalRoomDetails: document.getElementById('modalRoomDetails'),
   modalNotes: document.getElementById('modalNotes'),
+  btnModalJumpToWeek: document.getElementById('btnModalJumpToWeek'),
   btnModalGoogleCal: document.getElementById('btnModalGoogleCal'),
   btnModalCopyInfo: document.getElementById('btnModalCopyInfo')
 };
@@ -247,7 +248,7 @@ function updateLiveHero() {
     DOM.nextSubjectAvatar.textContent = "🎉";
     DOM.nextSubjectAvatar.style.background = "linear-gradient(135deg, #10b981, #06b6d4)";
     DOM.nextSlotBadge.textContent = "Hoàn tất";
-    DOM.nextTimeBadge.textContent = "Học kỳ 9";
+    DOM.nextTimeBadge.textContent = "Học kỳ 1";
     DOM.nextRoomBadge.textContent = "HT A601-HL";
     DOM.countdownLabel.textContent = "Trạng thái:";
     DOM.countdownTimer.textContent = "Đã hoàn thành 35 buổi học";
@@ -388,6 +389,15 @@ function initEventListeners() {
     DOM.btnModalCopyInfo.addEventListener('click', copyModalInfoToClipboard);
   }
 
+  // Jump to week from modal
+  if (DOM.btnModalJumpToWeek) {
+    DOM.btnModalJumpToWeek.addEventListener('click', () => {
+      if (AppState.activeModalSession) {
+        jumpToWeekSession(AppState.activeModalSession.id);
+      }
+    });
+  }
+
   // Keyboard shortcut Esc to close modal
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeModal();
@@ -508,7 +518,7 @@ function renderWeekGrid() {
         const sub = DataUtils.getSubjectInfo(matchedSession.subjectId);
         bodyHtml += `
           <td class="slot-cell ${isToday ? 'is-today' : ''}">
-            <div class="class-card" data-subject="${sub.id}" onclick="openSessionModal('${matchedSession.id}')">
+            <div class="class-card" data-subject="${sub.id}" data-session-id="${matchedSession.id}" onclick="openSessionModal('${matchedSession.id}')">
               <div class="card-top">
                 <span class="card-icon">${sub.icon}</span>
                 <span class="card-phase-tag">GĐ ${matchedSession.phase}</span>
@@ -586,7 +596,7 @@ function renderMobileWeekCards(daysInfo, weekSessions, simulatedDateStr) {
       daySessions.forEach(s => {
         const sub = DataUtils.getSubjectInfo(s.subjectId);
         cardsHtml += `
-          <div class="mobile-session-item" data-subject="${sub.id}" onclick="openSessionModal('${s.id}')">
+          <div class="mobile-session-item" data-subject="${sub.id}" data-session-id="${s.id}" onclick="openSessionModal('${s.id}')">
             <div class="mobile-session-top">
               <span class="mobile-sub-name">${sub.icon} ${sub.name}</span>
               <span class="tag-badge" style="font-size: 0.7rem;">GĐ ${s.phase}</span>
@@ -689,7 +699,7 @@ function renderTimeline() {
           </div>
 
           <div class="timeline-action-col">
-            <button class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.775rem;">
+            <button class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.775rem;" onclick="event.stopPropagation(); openSessionModal('${s.id}')">
               Chi tiết ➔
             </button>
           </div>
@@ -860,7 +870,13 @@ function openSessionModal(sessionId) {
   if (!session) return;
 
   AppState.activeModalSession = session;
-  const sub = DataUtils.getSubjectInfo(session.subjectId);
+  const sub = DataUtils.getSubjectInfo(session.subjectId) || {
+    name: session.subjectId,
+    code: '---',
+    gradient: 'linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)',
+    icon: '📚',
+    description: ''
+  };
   const slot = DataUtils.getSlotInfo(session.slotKey);
 
   DOM.modalBanner.style.background = sub.gradient;
@@ -869,15 +885,51 @@ function openSessionModal(sessionId) {
   DOM.modalSubjectCode.textContent = `Mã môn: ${sub.code} | Giai đoạn ${session.phase}`;
 
   DOM.modalDateTime.textContent = `${session.dayName}, ${formatShortDate(session.date)}/2026 (${session.startTime} – ${session.endTime})`;
-  DOM.modalSlotDetails.textContent = `${session.slotName} (${slot.slotDetails || slot.timeRange})`;
+  DOM.modalSlotDetails.textContent = `${session.slotName} (${(slot && (slot.slotDetails || slot.timeRange)) || ''})`;
   DOM.modalRoomDetails.textContent = `${session.room} (${SCHEDULE_CONFIG.roomFullName})`;
   DOM.modalNotes.textContent = sub.description;
+
+  if (DOM.btnModalJumpToWeek) {
+    DOM.btnModalJumpToWeek.textContent = `🔍 Xem trên Lưới (Tuần ${session.weekNumber})`;
+  }
 
   // Google Calendar link
   const gCalUrl = generateGoogleCalendarUrl(session, sub);
   DOM.btnModalGoogleCal.href = gCalUrl;
 
   DOM.modal.classList.add('active');
+}
+
+function jumpToWeekSession(sessionId) {
+  const session = SCHEDULE_SESSIONS.find(s => s.id === (sessionId || (AppState.activeModalSession && AppState.activeModalSession.id)));
+  if (!session) return;
+
+  closeModal();
+
+  // Chuyển sang chế độ xem Tuần
+  AppState.currentView = 'week';
+  DOM.tabButtons.forEach(btn => {
+    if (btn.getAttribute('data-view') === 'week') {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  // Chuyển tới tuần chứa buổi học
+  AppState.currentWeek = session.weekNumber;
+  switchView('week');
+  updateWeekNavDisplay();
+
+  // Highlight buổi học trên lưới
+  setTimeout(() => {
+    const card = document.querySelector(`.class-card[data-session-id="${session.id}"]`) || document.querySelector(`.mobile-session-item[data-session-id="${session.id}"]`);
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      card.classList.add('card-highlight-pulse');
+      setTimeout(() => card.classList.remove('card-highlight-pulse'), 3000);
+    }
+  }, 120);
 }
 
 function closeModal() {
@@ -908,7 +960,7 @@ function copyModalInfoToClipboard() {
 function generateGoogleCalendarUrl(session, subject) {
   const title = encodeURIComponent(`${subject.name} - ${session.slotName}`);
   const location = encodeURIComponent(`${session.room} (${SCHEDULE_CONFIG.roomFullName})`);
-  const details = encodeURIComponent(`Lịch học - Học kỳ 9\nLớp: ${SCHEDULE_CONFIG.classId}\nKhung slot: ${session.slotName} (${session.startTime} - ${session.endTime})\nMôn: ${subject.name}`);
+  const details = encodeURIComponent(`Lịch học - Học kỳ 1\nLớp: ${SCHEDULE_CONFIG.classId}\nKhung slot: ${session.slotName} (${session.startTime} - ${session.endTime})\nMôn: ${subject.name}`);
 
   // Format UTC dates (Vietnam is UTC+7 -> subtract 7 hours for UTC)
   const [y, m, d] = session.date.split('-').map(Number);
@@ -936,7 +988,7 @@ function exportToIcsFile() {
     'PRODID:-//Timetable Pro//VN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    'X-WR-CALNAME:Lich_Hoc_Ky9',
+    'X-WR-CALNAME:Lich_Hoc_Ky1',
     'X-WR-TIMEZONE:Asia/Ho_Chi_Minh'
   ];
 
@@ -977,8 +1029,15 @@ function exportToIcsFile() {
   const blob = new Blob([icsContent.join('\r\n')], { type: 'text/calendar;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.setAttribute('download', 'Lich_Hoc_Ky9_CQ64.ics');
+  link.setAttribute('download', 'Lich_Hoc_Ky1_CQ64.ics');
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 }
+
+// Gán toàn cục cho các trình xử lý sự kiện HTML
+window.openSessionModal = openSessionModal;
+window.closeModal = closeModal;
+window.jumpToWeekSession = jumpToWeekSession;
+window.copyModalInfoToClipboard = copyModalInfoToClipboard;
+
