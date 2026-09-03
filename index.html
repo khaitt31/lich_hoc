@@ -1,14 +1,29 @@
 <!DOCTYPE html>
-<html lang="vi" data-theme="dark">
+<html lang="vi" data-theme="pink">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Thời Khóa Biểu - Học kỳ 1 (2026 - 2027) | CQ64.09.01.01+02</title>
+  <title>Thời Khóa Biểu 🌸 - Học kỳ 1 (2026 - 2027) | CQ64.09.01.01+02</title>
   <meta name="description" content="Trang hiển thị thời khóa biểu đại học trực quan, hiện đại, hỗ trợ đếm ngược, lọc môn, xuất file lịch .ics cho Google/Apple Calendar.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌸</text></svg>">
 </head>
 <body>
+
+  <!-- CUTE FLOATING BACKGROUND DECORATIONS -->
+  <div class="cute-bg-decorations" aria-hidden="true">
+    <span class="cute-petal p1">🌸</span>
+    <span class="cute-petal p2">✨</span>
+    <span class="cute-petal p3">💖</span>
+    <span class="cute-petal p4">🌸</span>
+    <span class="cute-petal p5">🎀</span>
+    <span class="cute-petal p6">✨</span>
+    <span class="cute-petal p7">🌷</span>
+    <span class="cute-petal p8">💕</span>
+  </div>
 
   <div class="app-container">
     
@@ -16,12 +31,12 @@
     <header class="header-card">
       <div class="brand-section">
         <div class="brand-icon">
-          🎓
+          🌸
         </div>
         <div class="brand-info">
           <h1>
-            Thời Khóa Biểu
-            <span class="badge-semester">Học kỳ 1 (2026 - 2027)</span>
+            Thời Khóa Biểu <span class="cute-sparkle">🌸</span>
+            <span class="badge-semester">Học kỳ 1 (2026 - 2027) ✨</span>
           </h1>
           <div class="brand-meta">
             <span>🏫 <strong>Khóa lớp:</strong> <span class="location-tag">GĐ 1: Ghép CQ64.05.04 (134 SV)</span> <span class="location-tag">GĐ 2: CQ64.09.01.01+02 (91 SV)</span></span>
@@ -33,13 +48,13 @@
 
       <div class="header-actions">
         <button id="btnExportIcs" class="btn btn-primary" title="Xuất toàn bộ lịch sang Google Calendar / Apple Calendar">
-          📥 Xuất Lịch (.ics)
+          📥 Xuất Lịch (.ics) 🌸
         </button>
         <button id="btnPrint" class="btn btn-secondary" title="In hoặc lưu PDF lịch học">
-          🖨️ In Lịch
+          🖨️ In Lịch 🎀
         </button>
-        <button id="btnThemeToggle" class="btn btn-secondary btn-icon-only" title="Đổi giao diện Sáng / Tối">
-          🌙
+        <button id="btnThemeToggle" class="btn btn-secondary btn-icon-only" title="Đổi giao diện">
+          🌸
         </button>
       </div>
     </header>
@@ -57,7 +72,7 @@
         </div>
 
         <div class="next-class-body" id="nextClassContainer">
-          <div class="subject-avatar-lg" id="nextSubjectAvatar" style="background: linear-gradient(135deg, #4f46e5, #06b6d4);">🤖</div>
+          <div class="subject-avatar-lg" id="nextSubjectAvatar">🤖</div>
           <div class="next-class-details">
             <h2 id="nextSubjectTitle">Đang tải lịch...</h2>
             <div class="next-class-tags">
@@ -223,7 +238,7 @@
   <!-- FLOATING TIME TRAVEL SIMULATOR -->
   <aside class="time-simulator-bar" id="timeSimulatorBar">
     <button id="btnToggleSimBar" class="sim-toggle-pill" title="Mở / Đóng công cụ giả lập thời gian">
-      ⏱️ <span class="sim-toggle-text">Giả lập ngày</span>
+      ⏱️ <span class="sim-toggle-text">Giả lập ngày 🌸</span>
     </button>
     <div class="sim-content-wrapper" id="simContentWrapper">
       <input type="date" id="simDateInput" class="sim-input" min="2026-08-31" max="2026-12-20">
@@ -265,10 +280,10 @@
           <div class="modal-field-value" id="modalNotes" style="font-weight: normal; font-size: 0.875rem; color: var(--text-secondary);">--</div>
         </div>
         <div class="modal-actions">
-          <button id="btnModalJumpToWeek" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
-            🔍 Xem trên Lưới Tuần
+          <button id="btnModalJumpToWeek" class="btn btn-secondary">
+            🔍 Xem Lưới Tuần
           </button>
-          <a id="btnModalGoogleCal" href="#" target="_blank" class="btn btn-primary" style="flex: 1; text-align: center;">
+          <a id="btnModalGoogleCal" href="#" target="_blank" class="btn btn-primary">
             📅 Google Calendar
           </a>
           <button id="btnModalCopyInfo" class="btn btn-secondary">

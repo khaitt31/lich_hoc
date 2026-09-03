@@ -3,11 +3,20 @@
  */
 
 // Application State
+let savedAppTheme = localStorage.getItem('app_theme');
+if (savedAppTheme === 'dark') {
+  savedAppTheme = 'pink';
+  localStorage.setItem('app_theme', 'pink');
+}
+const defaultTheme = (savedAppTheme === 'pink' || savedAppTheme === 'dark-pink' || savedAppTheme === 'light')
+  ? savedAppTheme
+  : 'pink';
+
 const AppState = {
   currentWeek: 1,
   currentView: 'week',
   filterSubject: 'ALL',
-  theme: localStorage.getItem('app_theme') || 'dark',
+  theme: defaultTheme,
   simulatedDateTime: new Date(),
   isManualSimulated: false,
   calYear: 2026,
@@ -136,14 +145,35 @@ document.addEventListener('DOMContentLoaded', () => {
    ========================================================================== */
 function initTheme() {
   document.documentElement.setAttribute('data-theme', AppState.theme);
-  DOM.themeToggleBtn.textContent = AppState.theme === 'dark' ? '☀️' : '🌙';
-  DOM.themeToggleBtn.title = AppState.theme === 'dark' ? 'Chuyển sang giao diện Sáng' : 'Chuyển sang giao diện Tối';
+  if (DOM.themeToggleBtn) {
+    if (AppState.theme === 'pink') {
+      DOM.themeToggleBtn.textContent = '🌸';
+      DOM.themeToggleBtn.title = 'Giao diện: 🌸 Hồng Cute Pastel (Nhấp để đổi)';
+    } else if (AppState.theme === 'dark-pink') {
+      DOM.themeToggleBtn.textContent = '💖';
+      DOM.themeToggleBtn.title = 'Giao diện: 💖 Hồng Tối Cyber (Nhấp để đổi)';
+    } else {
+      DOM.themeToggleBtn.textContent = '☀️';
+      DOM.themeToggleBtn.title = 'Giao diện: ☀️ Sáng Pastel Nhẹ (Nhấp để đổi)';
+    }
+  }
 }
 
 function toggleTheme() {
-  AppState.theme = AppState.theme === 'dark' ? 'light' : 'dark';
+  const themeCycle = {
+    'pink': 'dark-pink',
+    'dark-pink': 'light',
+    'light': 'pink'
+  };
+  AppState.theme = themeCycle[AppState.theme] || 'pink';
   localStorage.setItem('app_theme', AppState.theme);
   initTheme();
+  const themeNames = {
+    'pink': '🌸 Hồng Cute Pastel',
+    'dark-pink': '💖 Hồng Tối Cyber',
+    'light': '☀️ Sáng Pastel Nhẹ'
+  };
+  showToast(`✨ Đã chuyển giao diện: ${themeNames[AppState.theme]}`);
 }
 
 /* ==========================================================================
@@ -253,7 +283,7 @@ function updateLiveHero() {
     DOM.liveStatusLabel.style.color = "var(--text-muted)";
     DOM.nextSubjectTitle.textContent = "Chúc mừng bạn đã hoàn thành kỳ học!";
     DOM.nextSubjectAvatar.textContent = "🎉";
-    DOM.nextSubjectAvatar.style.background = "linear-gradient(135deg, #10b981, #06b6d4)";
+    DOM.nextSubjectAvatar.style.background = "linear-gradient(135deg, #ff758c, #ff7eb3)";
     DOM.nextSlotBadge.textContent = "Hoàn tất";
     DOM.nextTimeBadge.textContent = "Học kỳ 1";
     DOM.nextRoomBadge.textContent = "Hòa Lạc";
@@ -777,7 +807,7 @@ function renderTimeline() {
       const isToday = s.date === getLocalDateString(AppState.simulatedDateTime);
 
       html += `
-        <div class="timeline-item" style="${isToday ? 'border-left: 4px solid var(--accent-primary); background: rgba(99, 102, 241, 0.08);' : ''}" onclick="openSessionModal('${s.id}')">
+        <div class="timeline-item ${isToday ? 'is-today' : ''}" onclick="openSessionModal('${s.id}')">
           <div class="timeline-time-col">
             <span class="timeline-day-str">${s.dayName}</span>
             <span class="timeline-date-str">${formatShortDate(s.date)}/2026</span>
@@ -996,7 +1026,7 @@ function openSessionModal(sessionId) {
   DOM.modalNotes.textContent = sub.description;
 
   if (DOM.btnModalJumpToWeek) {
-    DOM.btnModalJumpToWeek.textContent = `🔍 Xem trên Lưới (Tuần ${session.weekNumber})`;
+    DOM.btnModalJumpToWeek.textContent = `🔍 Xem Lưới (Tuần ${session.weekNumber})`;
   }
 
   // Google Calendar link
@@ -1060,7 +1090,7 @@ function copyModalInfoToClipboard() {
     `🏫 Lớp: ${classText}`;
 
   navigator.clipboard.writeText(text).then(() => {
-    DOM.btnModalCopyInfo.textContent = '✅ Đã sao chép!';
+    DOM.btnModalCopyInfo.textContent = '✅ Đã sao chép! 💖';
     setTimeout(() => {
       DOM.btnModalCopyInfo.textContent = '📋 Sao chép';
     }, 2000);
