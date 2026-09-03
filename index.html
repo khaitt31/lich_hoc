@@ -94,7 +94,7 @@
         <div class="stat-item">
           <span class="stat-label">Tổng số buổi</span>
           <span class="stat-value">91</span>
-          <span class="stat-sub">Toàn bộ 2 giai đoạn</span>
+          <span class="stat-sub" id="quickStatCompletedSub">Đã học: 0/91 buổi (0%)</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">Số môn học</span>
@@ -228,6 +228,11 @@
           <div class="calendar-month-grid" id="calendarGrid">
             <!-- Calendar day cells injected via JS -->
           </div>
+
+          <!-- Agenda Chi Tiết Ngày Được Chọn (Tối ưu cho Mobile & Desktop) -->
+          <div class="cal-selected-agenda" id="calSelectedAgenda">
+            <!-- Day agenda injected via JS -->
+          </div>
         </div>
       </section>
 
@@ -235,16 +240,21 @@
 
   </div>
 
-  <!-- FLOATING TIME TRAVEL SIMULATOR -->
-  <aside class="time-simulator-bar" id="timeSimulatorBar">
-    <button id="btnToggleSimBar" class="sim-toggle-pill" title="Mở / Đóng công cụ giả lập thời gian">
-      ⏱️ <span class="sim-toggle-text">Giả lập ngày 🌸</span>
+  <!-- FLOATING DATE LOOKUP BAR -->
+  <aside class="time-simulator-bar collapsed" id="timeSimulatorBar">
+    <button id="btnToggleSimBar" class="sim-toggle-pill" title="Mở / Đóng công cụ xem lịch theo ngày">
+      📅 <span class="sim-toggle-text">Xem theo ngày 🌸</span>
     </button>
     <div class="sim-content-wrapper" id="simContentWrapper">
-      <input type="date" id="simDateInput" class="sim-input" min="2026-08-31" max="2026-12-20">
-      <input type="time" id="simTimeInput" class="sim-input">
-      <button id="btnResetSimTime" class="btn btn-secondary sim-reset-btn">
-        🔄 Hiện tại
+      <div class="custom-date-picker-wrap" id="customDatePickerWrap" title="Nhập hoặc chọn ngày (ngày/tháng/năm)">
+        <input type="text" id="simDateTextInput" class="sim-input-text" placeholder="dd/mm/yyyy" maxlength="10" value="03/09/2026" title="Nhập ngày dạng ngày/tháng/năm (ví dụ: 03/09/2026)">
+        <div class="btn-cal-picker-trigger" title="Nhấp mở lịch chọn ngày">
+          <span>📅</span>
+          <input type="date" id="simDateInput" class="sim-date-native-overlay" min="2026-08-31" max="2026-12-20" tabindex="-1" title="Nhấp chọn ngày trên lịch">
+        </div>
+      </div>
+      <button id="btnResetSimTime" class="btn btn-secondary sim-reset-btn" title="Quay về ngày hôm nay">
+        🔄 Về hôm nay
       </button>
     </div>
   </aside>
@@ -259,6 +269,10 @@
         <p id="modalSubjectCode" style="font-size: 0.85rem; opacity: 0.9;">Mã môn: AI_001 | Giai đoạn 1</p>
       </div>
       <div class="modal-body">
+        <div class="modal-field-group">
+          <span class="modal-field-label">📌 Trạng thái & Thứ tự buổi học</span>
+          <div class="modal-field-value" id="modalStatusDetails">--</div>
+        </div>
         <div class="modal-field-group">
           <span class="modal-field-label">📅 Thời gian & Ngày học</span>
           <div class="modal-field-value" id="modalDateTime">Thứ Năm, 03/09/2026 (14:25 – 17:05)</div>

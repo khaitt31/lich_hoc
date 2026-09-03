@@ -17,8 +17,8 @@ const AppState = {
   currentView: 'week',
   filterSubject: 'ALL',
   theme: defaultTheme,
-  simulatedDateTime: new Date(),
-  isManualSimulated: false,
+  selectedDate: null, // Ngày được chọn để tra cứu (nếu có)
+  calSelectedDate: null, // Ngày được chọn trên lịch tháng để hiển thị agenda
   calYear: 2026,
   calMonth: (new Date().getFullYear() === 2026 && new Date().getMonth() >= 8 && new Date().getMonth() <= 11) ? new Date().getMonth() : 8,
   activeModalSession: null
@@ -76,14 +76,15 @@ const DOM = {
   // Calendar Elements
   calMonthTitle: document.getElementById('calMonthTitle'),
   calendarGrid: document.getElementById('calendarGrid'),
+  calSelectedAgenda: document.getElementById('calSelectedAgenda'),
   btnCalPrev: document.getElementById('btnCalPrev'),
   btnCalNext: document.getElementById('btnCalNext'),
 
-  // Time Simulator
+  // Time Simulator / Date Lookup
   timeSimulatorBar: document.getElementById('timeSimulatorBar'),
   btnToggleSimBar: document.getElementById('btnToggleSimBar'),
   simDateInput: document.getElementById('simDateInput'),
-  simTimeInput: document.getElementById('simTimeInput'),
+  simDateTextInput: document.getElementById('simDateTextInput'),
   btnResetSimTime: document.getElementById('btnResetSimTime'),
 
   // Modal Elements
@@ -132,8 +133,8 @@ function showToast(msg) {
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
-  // Auto-sync current week to simulated/current date
-  updateCurrentWeekFromDate(getLocalDateString(AppState.simulatedDateTime));
+  // Tự động đồng bộ tuần hiện tại theo ngày hôm nay thực tế
+  updateCurrentWeekFromDate(getLocalDateString(new Date()));
   initTimeSimulator();
   initEventListeners();
   renderAllViews();
@@ -177,30 +178,104 @@ function toggleTheme() {
 }
 
 /* ==========================================================================
-   TIME SIMULATOR & LIVE CLOCK
+   DATE LOOKUP BAR & LIVE CLOCK
    ========================================================================== */
 function initTimeSimulator() {
-  const yyyy = AppState.simulatedDateTime.getFullYear();
-  const mm = String(AppState.simulatedDateTime.getMonth() + 1).padStart(2, '0');
-  const dd = String(AppState.simulatedDateTime.getDate()).padStart(2, '0');
-  const hh = String(AppState.simulatedDateTime.getHours()).padStart(2, '0');
-  const min = String(AppState.simulatedDateTime.getMinutes()).padStart(2, '0');
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
 
-  DOM.simDateInput.value = `${yyyy}-${mm}-${dd}`;
-  DOM.simTimeInput.value = `${hh}:${min}`;
+  if (DOM.simDateInput) {
+    DOM.simDateInput.value = `${yyyy}-${mm}-${dd}`;
+  }
+  if (DOM.simDateTextInput) {
+    DOM.simDateTextInput.value = `${dd}/${mm}/${yyyy}`;
+  }
+}
+
+function applyDateLookup(dateVal) {
+  if (!dateVal) return;
+  const [y, m, d] = dateVal.split('-').map(Number);
+  AppState.selectedDate = dateVal;
+
+  const ddStr = String(d).padStart(2, '0');
+  const mmStr = String(m).padStart(2, '0');
+
+  // Luôn cập nhật ô hiển thị dạng ngày/tháng/năm
+  if (DOM.simDateInput) {
+    DOM.simDateInput.value = dateVal;
+  }
+  if (DOM.simDateTextInput) {
+    DOM.simDateTextInput.value = `${ddStr}/${mmStr}/${y}`;
+  }
+
+  // Chuyển tới tuần chứa ngày được chọn
+  updateCurrentWeekFromDate(dateVal);
+
+  // Đồng bộ tháng lịch nếu ngày thuộc các tháng kỳ 1 (Tháng 9 đến Tháng 12)
+  if (m >= 9 && m <= 12) {
+    AppState.calYear = y;
+    AppState.calMonth = m - 1;
+    AppState.calSelectedDate = dateVal;
+  }
+
+  // Làm mới lưới tuần và lịch để xem lịch ngày được chọn
+  updateWeekNavDisplay();
+  renderWeekGrid();
+  renderCalendar();
+
+  // Tự động cuộn & hiệu ứng phát sáng nhẹ ở ngày được chọn
+  setTimeout(() => {
+    const dayHeader = document.querySelector(`.day-header-cell[data-date="${dateVal}"]`);
+    if (dayHeader) {
+      dayHeader.classList.add('highlight-pulse');
+      setTimeout(() => dayHeader.classList.remove('highlight-pulse'), 1800);
+    }
+    const mCard = document.getElementById(`mDay_${dateVal}`);
+    if (mCard) {
+      mCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      mCard.classList.add('highlight-pulse');
+      setTimeout(() => mCard.classList.remove('highlight-pulse'), 1800);
+    }
+  }, 120);
+
+  const weekObj = SCHEDULE_CONFIG.weeks.find(w => w.weekNumber === AppState.currentWeek);
+  showToast(`📅 Đang xem lịch ngày ${ddStr}/${mmStr}/${y} (${weekObj ? weekObj.name : ''}) ✨`);
 }
 
 function updateSimulatedTimeFromInputs() {
-  const dateVal = DOM.simDateInput.value;
-  const timeVal = DOM.simTimeInput.value || '12:00';
+  const dateVal = DOM.simDateInput ? DOM.simDateInput.value : '';
   if (dateVal) {
-    const [y, m, d] = dateVal.split('-').map(Number);
-    const [h, min] = timeVal.split(':').map(Number);
-    AppState.simulatedDateTime = new Date(y, m - 1, d, h, min, 0);
-    AppState.isManualSimulated = true;
-    updateCurrentWeekFromDate(dateVal);
-    renderAllViews();
-    updateLiveHero();
+    applyDateLookup(dateVal);
+  }
+}
+
+function parseAndApplyTextDate(text) {
+  if (!text) return;
+  const cleaned = text.trim();
+  // Hỗ trợ dấu gạch chéo (/), gạch ngang (-), dấu chấm (.)
+  const parts = cleaned.split(/[\/\-\.]/);
+  if (parts.length === 3) {
+    const d = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
+    let y = parseInt(parts[2], 10);
+    if (y < 100) y += 2000;
+
+    if (!isNaN(d) && !isNaN(m) && !isNaN(y) && m >= 1 && m <= 12 && d >= 1 && d <= 31 && y >= 2026 && y <= 2027) {
+      const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      applyDateLookup(dateStr);
+      return;
+    }
+  }
+
+  showToast('⚠️ Vui lòng nhập ngày theo dạng ngày/tháng/năm (ví dụ: 03/09/2026)');
+  // Trả về ngày hợp lệ gần nhất
+  if (AppState.selectedDate) {
+    const [y, m, d] = AppState.selectedDate.split('-');
+    DOM.simDateTextInput.value = `${d}/${m}/${y}`;
+  } else {
+    initTimeSimulator();
   }
 }
 
@@ -218,24 +293,28 @@ function updateCurrentWeekFromDate(dateStr) {
 }
 
 function resetToCurrentTime() {
-  AppState.isManualSimulated = false;
-  AppState.simulatedDateTime = new Date();
-  const currentDateStr = getLocalDateString(AppState.simulatedDateTime);
-  
-  // Set current week according to today's date
-  updateCurrentWeekFromDate(currentDateStr);
-  
-  // Set calendar month according to today's month
-  AppState.calYear = AppState.simulatedDateTime.getFullYear();
-  AppState.calMonth = AppState.simulatedDateTime.getMonth();
+  AppState.selectedDate = null;
+  const now = new Date();
+  const currentDateStr = getLocalDateString(now);
 
-  // Update simulator input boxes
+  // Chuyển về tuần hiện tại
+  updateCurrentWeekFromDate(currentDateStr);
+
+  // Chuyển về tháng hiện tại
+  AppState.calYear = now.getFullYear();
+  AppState.calMonth = (now.getMonth() >= 8 && now.getMonth() <= 11) ? now.getMonth() : 8;
+  AppState.calSelectedDate = currentDateStr;
+
+  // Đặt lại ô chọn ngày dạng ngày/tháng/năm
   initTimeSimulator();
 
-  // Re-render all views
-  renderAllViews();
+  // Làm mới giao diện
+  updateWeekNavDisplay();
+  renderWeekGrid();
+  renderCalendar();
+  updateLiveHero();
 
-  // Highlight today's card on mobile
+  // Cuộn tới ngày hôm nay
   setTimeout(() => {
     const mCard = document.getElementById(`mDay_${currentDateStr}`);
     if (mCard) {
@@ -245,38 +324,58 @@ function resetToCurrentTime() {
     }
   }, 100);
 
-  // Show toast notification
-  showToast('⏰ Đã đồng bộ về ngày & giờ hiện tại!');
+  showToast('⏰ Đã quay về ngày hôm nay!');
+}
+
+let lastCheckedMinute = -1;
+
+function renderActiveView() {
+  if (AppState.currentView === 'week') renderWeekGrid();
+  else if (AppState.currentView === 'timeline') renderTimeline();
+  else if (AppState.currentView === 'subjects') renderSubjectsMatrix();
+  else if (AppState.currentView === 'calendar') renderCalendar();
 }
 
 function startLiveClock() {
   const updateTick = () => {
-    if (!AppState.isManualSimulated) {
-      AppState.simulatedDateTime = new Date();
-    } else {
-      AppState.simulatedDateTime = new Date(AppState.simulatedDateTime.getTime() + 1000);
-    }
-    
+    const now = new Date();
+
     // Format live clock string
-    const timeStr = AppState.simulatedDateTime.toLocaleTimeString('vi-VN');
+    const timeStr = now.toLocaleTimeString('vi-VN');
     DOM.liveClock.textContent = timeStr;
 
-    // Update Hero status
-    updateLiveHero();
+    // Update Hero status theo thời gian thực
+    updateLiveHero(now);
+
+    // Tự động làm mới view đang mở mỗi khi đồng hồ chuyển phút (để cập nhật ngay khi lớp học bắt đầu hoặc kết thúc)
+    const currentMin = now.getMinutes();
+    if (currentMin !== lastCheckedMinute) {
+      lastCheckedMinute = currentMin;
+      renderActiveView();
+    }
   };
 
   updateTick();
   setInterval(updateTick, 1000);
 }
 
-function updateLiveHero() {
-  const sim = AppState.simulatedDateTime;
+function updateLiveHero(currentDateObj = new Date()) {
+  const now = currentDateObj instanceof Date ? currentDateObj : new Date();
   const daysOfWeekVi = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
-  const dayVi = daysOfWeekVi[sim.getDay()];
-  const dateFormatted = `${dayVi}, ${String(sim.getDate()).padStart(2, '0')}/${String(sim.getMonth() + 1).padStart(2, '0')}/${sim.getFullYear()}`;
+  const dayVi = daysOfWeekVi[now.getDay()];
+  const dateFormatted = `${dayVi}, ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
   DOM.currentSimulatedDateStr.textContent = dateFormatted;
 
-  const nextInfo = DataUtils.getNextSession(sim);
+  // Cập nhật thống kê tiến độ nhanh toàn kỳ (luôn dựa trên thời gian thực tế)
+  const totalCompleted = DataUtils.getCompletedSessionsCount(null, now);
+  const totalAllSessions = SCHEDULE_SESSIONS.length;
+  const totalProgressPct = totalAllSessions > 0 ? Math.round((totalCompleted / totalAllSessions) * 100) : 0;
+  const quickStatSub = document.getElementById('quickStatCompletedSub');
+  if (quickStatSub) {
+    quickStatSub.innerHTML = `Đã học: <strong style="color: var(--accent-primary);">${totalCompleted}/${totalAllSessions}</strong> buổi (${totalProgressPct}%)`;
+  }
+
+  const nextInfo = DataUtils.getNextSession(now);
 
   if (!nextInfo) {
     DOM.liveStatusLabel.textContent = "Kỳ học đã kết thúc";
@@ -303,8 +402,6 @@ function updateLiveHero() {
   const classPill = session.phase === 1 ? "Ghép CQ64.05.04 (134 SV)" : "CQ64.09.01.01+02 (91 SV)";
   DOM.nextRoomBadge.textContent = `${session.room} • ${classPill}`;
 
-  const [startH, startM] = session.startTime.split(':').map(Number);
-  const [endH, endM] = session.endTime.split(':').map(Number);
   const sessionStartDate = new Date(`${session.date}T${session.startTime}:00`);
   const sessionEndDate = new Date(`${session.date}T${session.endTime}:00`);
 
@@ -312,19 +409,19 @@ function updateLiveHero() {
     DOM.liveStatusLabel.textContent = "Đang diễn ra lớp học";
     DOM.liveStatusLabel.style.color = "#34d399";
     DOM.countdownLabel.textContent = "Thời gian còn lại của tiết:";
-    const diffMs = sessionEndDate - sim;
+    const diffMs = sessionEndDate - now;
     DOM.countdownTimer.textContent = formatCountdown(diffMs);
   } else if (isToday) {
     DOM.liveStatusLabel.textContent = "Lớp học hôm nay";
     DOM.liveStatusLabel.style.color = "#38bdf8";
     DOM.countdownLabel.textContent = "Đếm ngược vào lớp:";
-    const diffMs = sessionStartDate - sim;
+    const diffMs = sessionStartDate - now;
     DOM.countdownTimer.textContent = formatCountdown(diffMs);
   } else {
     DOM.liveStatusLabel.textContent = `Buổi học kế tiếp (${session.dayName} ${formatShortDate(session.date)})`;
     DOM.liveStatusLabel.style.color = "#a5b4fc";
     DOM.countdownLabel.textContent = "Thời gian tới buổi học:";
-    const diffMs = sessionStartDate - sim;
+    const diffMs = sessionStartDate - now;
     DOM.countdownTimer.textContent = formatCountdown(diffMs);
   }
 }
@@ -403,10 +500,24 @@ function initEventListeners() {
     }
   });
 
-  // Simulator inputs
-  DOM.simDateInput.addEventListener('change', updateSimulatedTimeFromInputs);
-  DOM.simTimeInput.addEventListener('change', updateSimulatedTimeFromInputs);
-  DOM.btnResetSimTime.addEventListener('click', resetToCurrentTime);
+  // Date lookup inputs
+  if (DOM.simDateInput) {
+    DOM.simDateInput.addEventListener('change', updateSimulatedTimeFromInputs);
+  }
+  if (DOM.simDateTextInput) {
+    DOM.simDateTextInput.addEventListener('change', () => {
+      parseAndApplyTextDate(DOM.simDateTextInput.value);
+    });
+    DOM.simDateTextInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        parseAndApplyTextDate(DOM.simDateTextInput.value);
+        DOM.simDateTextInput.blur();
+      }
+    });
+  }
+  if (DOM.btnResetSimTime) {
+    DOM.btnResetSimTime.addEventListener('click', resetToCurrentTime);
+  }
 
   // Export iCS
   DOM.btnExportIcs.addEventListener('click', exportToIcsFile);
@@ -509,14 +620,17 @@ function renderWeekGrid() {
     });
   }
 
-  const simulatedDateStr = getLocalDateString(AppState.simulatedDateTime);
+  const realNow = new Date();
+  const realDateStr = getLocalDateString(realNow);
+  const selectedDateStr = AppState.selectedDate;
 
   // 1. Render Desktop Table Header
   let headerHtml = `<th class="col-slot-header">Khung Slot / Tiết</th>`;
   daysInfo.forEach(day => {
-    const isToday = day.dateStr === simulatedDateStr;
+    const isToday = day.dateStr === realDateStr;
+    const isSelected = day.dateStr === selectedDateStr && !isToday;
     headerHtml += `
-      <th class="day-header-cell ${isToday ? 'is-today' : ''}">
+      <th class="day-header-cell ${isToday ? 'is-today' : ''} ${isSelected ? 'is-selected-day' : ''}" data-date="${day.dateStr}">
         <div class="day-title">${day.dayTitle}</div>
         <div class="day-date-sub">${day.dateShort}</div>
       </th>
@@ -634,14 +748,26 @@ function renderWeekGrid() {
 
     // 7 Day Cells
     daysInfo.forEach(day => {
-      const isToday = day.dateStr === simulatedDateStr;
+      const isToday = day.dateStr === realDateStr;
+      const isSelected = day.dateStr === selectedDateStr && !isToday;
       const matchedSession = weekSessions.find(s => s.date === day.dateStr && rowDef.matcher(s));
 
       if (matchedSession) {
         const sub = DataUtils.getSubjectInfo(matchedSession.subjectId);
+        const sessionStatus = DataUtils.getSessionStatus(matchedSession, realNow);
+        const isCompleted = sessionStatus === 'completed';
+        const isOngoing = sessionStatus === 'ongoing';
+
+        let statusBadgeHtml = '';
+        if (isCompleted) {
+          statusBadgeHtml = `<span class="session-badge-status completed">✓ Đã học</span>`;
+        } else if (isOngoing) {
+          statusBadgeHtml = `<span class="session-badge-status ongoing"><span class="pulse-dot-sm"></span> Đang học</span>`;
+        }
+
         bodyHtml += `
-          <td class="slot-cell ${isToday ? 'is-today' : ''}">
-            <div class="class-card phase-${matchedSession.phase}" 
+          <td class="slot-cell ${isToday ? 'is-today' : ''} ${isSelected ? 'is-selected-day' : ''}">
+            <div class="class-card phase-${matchedSession.phase} status-${sessionStatus} ${isCompleted ? 'is-completed' : ''} ${isOngoing ? 'is-ongoing' : ''}" 
                  data-subject="${sub.id}" 
                  data-session-id="${matchedSession.id}" 
                  onclick="openSessionModal('${matchedSession.id}')">
@@ -650,7 +776,10 @@ function renderWeekGrid() {
                   <div class="card-icon-box" style="background: ${sub.lightBg}; border: 1px solid ${sub.borderColor};">
                     ${sub.icon}
                   </div>
-                  <span class="card-phase-tag phase-${matchedSession.phase}">GĐ ${matchedSession.phase}</span>
+                  <div style="display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;">
+                    ${statusBadgeHtml}
+                    <span class="card-phase-tag phase-${matchedSession.phase}">GĐ ${matchedSession.phase}</span>
+                  </div>
                 </div>
                 <div class="card-subject-name" title="${sub.name}">${sub.name}</div>
                 <div class="card-slot-pill">${matchedSession.slotName}</div>
@@ -677,21 +806,22 @@ function renderWeekGrid() {
   DOM.gridBody.innerHTML = bodyHtml;
 
   // 3. Render Mobile Day Cards
-  renderMobileWeekCards(daysInfo, weekSessions, simulatedDateStr);
+  renderMobileWeekCards(daysInfo, weekSessions, realDateStr);
 }
 
 /* ==========================================================================
    MOBILE WEEK CARDS RENDERER
    ========================================================================== */
-function renderMobileWeekCards(daysInfo, weekSessions, simulatedDateStr) {
+function renderMobileWeekCards(daysInfo, weekSessions, realDateStr) {
   if (!DOM.mobileWeekCards) return;
+  const realNow = new Date();
 
   // Render quick day chip selector
   if (DOM.mobileDaySelector) {
     let chipsHtml = '';
     daysInfo.forEach(day => {
       const hasSessions = weekSessions.some(s => s.date === day.dateStr);
-      const isToday = day.dateStr === simulatedDateStr;
+      const isToday = day.dateStr === realDateStr;
       chipsHtml += `
         <button class="mobile-day-chip-btn ${isToday ? 'active' : ''}" onclick="scrollToMobileDay('${day.dateStr}')">
           ${day.dayShort} (${day.dateShort}) ${hasSessions ? '•' : ''}
@@ -705,7 +835,7 @@ function renderMobileWeekCards(daysInfo, weekSessions, simulatedDateStr) {
   let cardsHtml = '';
 
   daysInfo.forEach(day => {
-    const isToday = day.dateStr === simulatedDateStr;
+    const isToday = day.dateStr === realDateStr;
     const daySessions = weekSessions.filter(s => s.date === day.dateStr);
 
     cardsHtml += `
@@ -726,11 +856,25 @@ function renderMobileWeekCards(daysInfo, weekSessions, simulatedDateStr) {
     } else {
       daySessions.forEach(s => {
         const sub = DataUtils.getSubjectInfo(s.subjectId);
+        const sessionStatus = DataUtils.getSessionStatus(s, realNow);
+        const isCompleted = sessionStatus === 'completed';
+        const isOngoing = sessionStatus === 'ongoing';
+
+        let mobileStatusBadge = '';
+        if (isCompleted) {
+          mobileStatusBadge = `<span class="session-badge-status completed">✓ Đã học</span>`;
+        } else if (isOngoing) {
+          mobileStatusBadge = `<span class="session-badge-status ongoing"><span class="pulse-dot-sm"></span> Đang học</span>`;
+        }
+
         cardsHtml += `
-          <div class="mobile-session-item" data-subject="${sub.id}" data-session-id="${s.id}" onclick="openSessionModal('${s.id}')">
+          <div class="mobile-session-item status-${sessionStatus} ${isCompleted ? 'is-completed' : ''}" data-subject="${sub.id}" data-session-id="${s.id}" onclick="openSessionModal('${s.id}')">
             <div class="mobile-session-top">
               <span class="mobile-sub-name">${sub.icon} ${sub.name}</span>
-              <span class="tag-badge" style="font-size: 0.7rem;">GĐ ${s.phase}</span>
+              <div style="display: flex; gap: 0.35rem; align-items: center;">
+                ${mobileStatusBadge}
+                <span class="tag-badge" style="font-size: 0.7rem;">GĐ ${s.phase}</span>
+              </div>
             </div>
             <div class="mobile-session-meta">
               <span>⏰ <strong>${s.slotName}</strong> (${s.startTime} – ${s.endTime})</span>
@@ -764,6 +908,9 @@ function scrollToMobileDay(dateStr) {
    VIEW 2: TIMELINE / AGENDA RENDERER
    ========================================================================== */
 function renderTimeline() {
+  const realNow = new Date();
+  const realDateStr = getLocalDateString(realNow);
+
   let sessions = [...SCHEDULE_SESSIONS];
   if (AppState.filterSubject !== 'ALL') {
     sessions = sessions.filter(s => s.subjectId === AppState.filterSubject);
@@ -802,12 +949,26 @@ function renderTimeline() {
         <div class="timeline-items-list">
     `;
 
+    const nextInfo = DataUtils.getNextSession(realNow);
+    const nextSessionId = nextInfo && nextInfo.session ? nextInfo.session.id : null;
+
     weekList.forEach(s => {
       const sub = DataUtils.getSubjectInfo(s.subjectId);
-      const isToday = s.date === getLocalDateString(AppState.simulatedDateTime);
+      const isToday = s.date === realDateStr;
+      const sessionStatus = DataUtils.getSessionStatus(s, realNow);
+      const isNext = s.id === nextSessionId;
+
+      let statusBadgeHtml = '';
+      if (sessionStatus === 'completed') {
+        statusBadgeHtml = `<span class="timeline-status-tag completed">✓ Đã hoàn thành</span>`;
+      } else if (sessionStatus === 'ongoing') {
+        statusBadgeHtml = `<span class="timeline-status-tag ongoing">🔴 Đang diễn ra</span>`;
+      } else if (isNext) {
+        statusBadgeHtml = `<span class="timeline-status-tag next">⚡ Buổi tiếp theo</span>`;
+      }
 
       html += `
-        <div class="timeline-item ${isToday ? 'is-today' : ''}" onclick="openSessionModal('${s.id}')">
+        <div class="timeline-item ${isToday ? 'is-today' : ''} status-${sessionStatus}" onclick="openSessionModal('${s.id}')">
           <div class="timeline-time-col">
             <span class="timeline-day-str">${s.dayName}</span>
             <span class="timeline-date-str">${formatShortDate(s.date)}/2026</span>
@@ -818,8 +979,11 @@ function renderTimeline() {
               ${sub.icon}
             </div>
             <div>
-              <div class="timeline-subject-title" style="color: ${sub.color};">${sub.name}</div>
-              <div class="timeline-meta-tags">
+              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <div class="timeline-subject-title" style="color: ${sub.color}; margin-bottom: 0;">${sub.name}</div>
+                ${statusBadgeHtml}
+              </div>
+              <div class="timeline-meta-tags" style="margin-top: 0.25rem;">
                 <span>⏰ <strong>${s.slotName}</strong> (${s.startTime} – ${s.endTime})</span>
                 <span>•</span>
                 <span class="room-badge">📍 ${s.room}</span>
@@ -851,15 +1015,16 @@ function renderTimeline() {
    VIEW 3: SUBJECTS MATRIX RENDERER
    ========================================================================== */
 function renderSubjectsMatrix() {
+  const realNow = new Date();
   const subjectsKeys = Object.keys(SCHEDULE_CONFIG.subjects);
   let html = '';
 
   subjectsKeys.forEach(key => {
     const sub = SCHEDULE_CONFIG.subjects[key];
     const sessions = DataUtils.getSessionsBySubject(sub.id);
-    const simulatedDateStr = getLocalDateString(AppState.simulatedDateTime);
 
-    const completedCount = sessions.filter(s => s.date < simulatedDateStr).length;
+    // Tiến độ và số buổi hoàn thành LUÔN LUÔN tính theo thời gian thực tế
+    const completedCount = sessions.filter(s => DataUtils.isSessionCompleted(s, realNow)).length;
     const totalCount = sessions.length;
     const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
@@ -889,13 +1054,18 @@ function renderSubjectsMatrix() {
               <div class="sub-stat-lbl">Tổng số buổi</div>
             </div>
             <div>
-              <div class="sub-stat-num">${completedCount}</div>
+              <div class="sub-stat-num" style="${completedCount > 0 ? `color: ${sub.color}; font-weight: 800;` : ''}">${completedCount}</div>
               <div class="sub-stat-lbl">Đã hoàn thành</div>
             </div>
             <div>
-              <div class="sub-stat-num">${progressPercent}%</div>
+              <div class="sub-stat-num" style="${completedCount > 0 ? `color: ${sub.color}; font-weight: 800;` : ''}">${progressPercent}%</div>
               <div class="sub-stat-lbl">Tiến độ</div>
             </div>
+          </div>
+
+          <!-- Progress bar -->
+          <div class="subject-progress-container" title="Tiến độ môn học: ${completedCount}/${totalCount} buổi (${progressPercent}%)">
+            <div class="subject-progress-bar" style="width: ${progressPercent}%; background: ${sub.gradient};"></div>
           </div>
 
           <div style="margin-top: 0.85rem;">
@@ -904,10 +1074,12 @@ function renderSubjectsMatrix() {
             </div>
             <div class="subject-dates-list">
               ${sessions.map(s => {
-                const isPassed = s.date < simulatedDateStr;
+                const status = DataUtils.getSessionStatus(s, realNow);
+                const isPassed = status === 'completed';
+                const isOngoing = status === 'ongoing';
                 return `
-                  <span class="date-chip" style="${isPassed ? 'text-decoration: line-through; opacity: 0.6;' : 'font-weight: 600;'}" onclick="openSessionModal('${s.id}')" title="${s.dayName} (${s.slotName})">
-                    ${formatShortDate(s.date)} (${s.dayNameEn})
+                  <span class="date-chip ${status}" onclick="openSessionModal('${s.id}')" title="${s.dayName} (${s.slotName}) - ${isPassed ? 'Đã hoàn thành' : isOngoing ? 'Đang diễn ra' : 'Chưa diễn ra'}">
+                    ${isPassed ? '✓ ' : isOngoing ? '🔴 ' : ''}${formatShortDate(s.date)} (${s.dayNameEn})
                   </span>
                 `;
               }).join('')}
@@ -943,14 +1115,28 @@ function renderCalendar() {
 
   const totalDays = lastDayOfMonth.getDate();
 
+  const realNow = new Date();
+  const realDateStr = getLocalDateString(realNow);
+  const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+  // Default selected date for Agenda
+  if (!AppState.calSelectedDate || !AppState.calSelectedDate.startsWith(monthPrefix)) {
+    if (realDateStr.startsWith(monthPrefix)) {
+      AppState.calSelectedDate = realDateStr;
+    } else {
+      const firstClassDate = SCHEDULE_SESSIONS.find(s => s.date.startsWith(monthPrefix));
+      AppState.calSelectedDate = firstClassDate ? firstClassDate.date : `${monthPrefix}-01`;
+    }
+  }
+
   let html = `
-    <div class="cal-weekday">T2 (MON)</div>
-    <div class="cal-weekday">T3 (TUE)</div>
-    <div class="cal-weekday">T4 (WED)</div>
-    <div class="cal-weekday">T5 (THU)</div>
-    <div class="cal-weekday">T6 (FRI)</div>
-    <div class="cal-weekday">T7 (SAT)</div>
-    <div class="cal-weekday">CN (SUN)</div>
+    <div class="cal-weekday"><span class="cal-weekday-full">T2 (MON)</span><span class="cal-weekday-short">T2</span></div>
+    <div class="cal-weekday"><span class="cal-weekday-full">T3 (TUE)</span><span class="cal-weekday-short">T3</span></div>
+    <div class="cal-weekday"><span class="cal-weekday-full">T4 (WED)</span><span class="cal-weekday-short">T4</span></div>
+    <div class="cal-weekday"><span class="cal-weekday-full">T5 (THU)</span><span class="cal-weekday-short">T5</span></div>
+    <div class="cal-weekday"><span class="cal-weekday-full">T6 (FRI)</span><span class="cal-weekday-short">T6</span></div>
+    <div class="cal-weekday"><span class="cal-weekday-full">T7 (SAT)</span><span class="cal-weekday-short">T7</span></div>
+    <div class="cal-weekday"><span class="cal-weekday-full">CN (SUN)</span><span class="cal-weekday-short">CN</span></div>
   `;
 
   // Previous month trailing days
@@ -964,24 +1150,29 @@ function renderCalendar() {
     `;
   }
 
-  const simulatedDateStr = getLocalDateString(AppState.simulatedDateTime);
-
   // Current month days
   for (let day = 1; day <= totalDays; day++) {
     const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const daySessions = DataUtils.getSessionsByDate(dStr);
-    const isToday = dStr === simulatedDateStr;
+    const isToday = dStr === realDateStr;
+    const isSelected = dStr === AppState.calSelectedDate;
     const hasClass = daySessions.length > 0;
 
     html += `
-      <div class="cal-day-cell ${hasClass ? 'has-class' : ''} ${isToday ? 'is-today' : ''}">
+      <div class="cal-day-cell ${hasClass ? 'has-class' : ''} ${isToday ? 'is-today' : ''} ${isSelected ? 'selected' : ''}" 
+           onclick="selectCalendarDay('${dStr}')" 
+           data-date="${dStr}"
+           title="Nhấp để xem chi tiết ngày ${day}/${month + 1}">
         <span class="cal-day-num">${day}</span>
         <div class="cal-dots-container">
           ${daySessions.map(s => {
             const sub = DataUtils.getSubjectInfo(s.subjectId);
+            const sessionStatus = DataUtils.getSessionStatus(s, realNow);
+            const prefix = sessionStatus === 'completed' ? '✓ ' : sessionStatus === 'ongoing' ? '🔴 ' : '';
             return `
-              <div class="cal-session-pill" style="background: ${sub.color};" onclick="openSessionModal('${s.id}')" title="${sub.name} - ${s.slotName}">
-                ${sub.shortName} (${s.slotKey})
+              <div class="cal-session-pill ${sessionStatus}" style="background: ${sub.color};" onclick="event.stopPropagation(); openSessionModal('${s.id}')" title="${sub.name} - ${s.slotName} (${sessionStatus === 'completed' ? 'Đã hoàn thành' : sessionStatus === 'ongoing' ? 'Đang diễn ra' : 'Chưa diễn ra'})">
+                <span class="pill-full">${prefix}${sub.shortName} (${s.slotKey})</span>
+                <span class="pill-short">${prefix}${sub.id}</span>
               </div>
             `;
           }).join('')}
@@ -991,6 +1182,93 @@ function renderCalendar() {
   }
 
   DOM.calendarGrid.innerHTML = html;
+  renderCalendarAgenda(AppState.calSelectedDate);
+}
+
+function selectCalendarDay(dateStr) {
+  AppState.calSelectedDate = dateStr;
+
+  const cells = DOM.calendarGrid.querySelectorAll('.cal-day-cell');
+  cells.forEach(cell => {
+    if (cell.getAttribute('data-date') === dateStr) {
+      cell.classList.add('selected');
+    } else {
+      cell.classList.remove('selected');
+    }
+  });
+
+  renderCalendarAgenda(dateStr);
+}
+
+function renderCalendarAgenda(dateStr) {
+  if (!DOM.calSelectedAgenda) return;
+  const realNow = new Date();
+  const daySessions = DataUtils.getSessionsByDate(dateStr);
+  const [y, m, d] = dateStr.split('-');
+  const dateObj = new Date(Number(y), Number(m) - 1, Number(d));
+  const daysOfWeekVi = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
+  const dayTitle = daysOfWeekVi[dateObj.getDay()];
+  const isToday = dateStr === getLocalDateString(realNow);
+
+  let html = `
+    <div class="agenda-card">
+      <div class="agenda-header">
+        <div class="agenda-date-info">
+          <span class="agenda-day-name">📅 ${dayTitle}, ${d}/${m}/${y}</span>
+          ${isToday ? '<span class="agenda-today-tag">Hôm nay</span>' : ''}
+        </div>
+        <span class="agenda-count-badge">${daySessions.length} tiết học</span>
+      </div>
+  `;
+
+  if (daySessions.length === 0) {
+    html += `
+      <div class="agenda-empty">
+        <span>🌸 Ngày này không có tiết học (nghỉ ngơi hoặc tự học)</span>
+      </div>
+    `;
+  } else {
+    html += `<div class="agenda-sessions-list">`;
+    daySessions.forEach(s => {
+      const sub = DataUtils.getSubjectInfo(s.subjectId);
+      const sessionStatus = DataUtils.getSessionStatus(s, realNow);
+      const isCompleted = sessionStatus === 'completed';
+      const isOngoing = sessionStatus === 'ongoing';
+      const classPill = s.phase === 1 ? "Ghép CQ64.05.04 (134 SV)" : "CQ64.09.01.01+02 (91 SV)";
+
+      let statusBadge = '';
+      if (isCompleted) {
+        statusBadge = `<span class="agenda-status-badge completed">✓ Đã học</span>`;
+      } else if (isOngoing) {
+        statusBadge = `<span class="agenda-status-badge ongoing">🔴 Đang học</span>`;
+      } else {
+        statusBadge = `<span class="agenda-status-badge upcoming">Sắp diễn ra</span>`;
+      }
+
+      html += `
+        <div class="agenda-session-item status-${sessionStatus}" onclick="openSessionModal('${s.id}')">
+          <div class="agenda-item-left">
+            <span class="agenda-item-icon" style="background: ${sub.gradient};">${sub.icon}</span>
+            <div class="agenda-item-text">
+              <div class="agenda-item-title">${sub.name}</div>
+              <div class="agenda-item-meta">
+                <span>⏰ ${s.slotName} (${s.startTime} – ${s.endTime})</span>
+                <span>📍 ${s.room} • ${classPill}</span>
+              </div>
+            </div>
+          </div>
+          <div class="agenda-item-right">
+            ${statusBadge}
+            <span class="agenda-arrow">➔</span>
+          </div>
+        </div>
+      `;
+    });
+    html += `</div>`;
+  }
+
+  html += `</div>`;
+  DOM.calSelectedAgenda.innerHTML = html;
 }
 
 /* ==========================================================================
@@ -1017,6 +1295,23 @@ function openSessionModal(sessionId) {
 
   DOM.modalDateTime.textContent = `${session.dayName}, ${formatShortDate(session.date)}/2026 (${session.startTime} – ${session.endTime})`;
   DOM.modalSlotDetails.textContent = `${session.slotName} (${(slot && (slot.slotDetails || slot.timeRange)) || ''})`;
+
+  // Hiển thị trạng thái và thứ tự buổi học theo thời gian thực tế
+  const realNow = new Date();
+  const orderInfo = DataUtils.getSessionOrderInfo(session.id);
+  const sessionStatus = DataUtils.getSessionStatus(session, realNow);
+  let statusText = '';
+  if (sessionStatus === 'completed') {
+    statusText = `✅ <strong style="color: #059669;">Đã hoàn thành</strong> • Buổi ${orderInfo.indexInSub}/${orderInfo.totalInSub} môn ${sub.name} (Buổi ${orderInfo.indexInAll}/${orderInfo.totalInAll} toàn kỳ)`;
+  } else if (sessionStatus === 'ongoing') {
+    statusText = `🔴 <strong style="color: #e11d48;">Đang diễn ra lớp học</strong> • Buổi ${orderInfo.indexInSub}/${orderInfo.totalInSub} môn ${sub.name}`;
+  } else {
+    statusText = `⏳ <strong style="color: #6366f1;">Chưa diễn ra</strong> • Buổi ${orderInfo.indexInSub}/${orderInfo.totalInSub} môn ${sub.name} (Buổi ${orderInfo.indexInAll}/${orderInfo.totalInAll} toàn kỳ)`;
+  }
+  const modalStatusEl = document.getElementById('modalStatusDetails');
+  if (modalStatusEl) {
+    modalStatusEl.innerHTML = statusText;
+  }
   if (DOM.modalClassDetails) {
     DOM.modalClassDetails.textContent = session.phase === 1
       ? "CQ64.09.01.01+02 ghép CQ64.05.04 (Sĩ số: 134 sinh viên)"
