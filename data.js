@@ -1803,6 +1803,67 @@ const DataUtils = {
     return `${yyyy}-${mm}-${dd}`;
   },
 
+  // Kiểm tra một buổi học đã kết thúc / hoàn thành hay chưa
+  isSessionCompleted(session, currentDateTime = new Date()) {
+    if (!session) return false;
+    const currentDateStr = this.formatLocalDate(currentDateTime);
+    if (session.date < currentDateStr) return true;
+    if (session.date > currentDateStr) return false;
+
+    // Cùng ngày: so sánh giờ kết thúc
+    const currentMinutes = currentDateTime.getHours() * 60 + currentDateTime.getMinutes();
+    const [endH, endM] = session.endTime.split(':').map(Number);
+    const endMinutes = endH * 60 + endM;
+
+    return currentMinutes >= endMinutes;
+  },
+
+  // Kiểm tra một buổi học đang diễn ra hay không
+  isSessionOngoing(session, currentDateTime = new Date()) {
+    if (!session) return false;
+    const currentDateStr = this.formatLocalDate(currentDateTime);
+    if (session.date !== currentDateStr) return false;
+
+    const currentMinutes = currentDateTime.getHours() * 60 + currentDateTime.getMinutes();
+    const [startH, startM] = session.startTime.split(':').map(Number);
+    const [endH, endM] = session.endTime.split(':').map(Number);
+    const startMinutes = startH * 60 + startM;
+    const endMinutes = endH * 60 + endM;
+
+    return currentMinutes >= startMinutes && currentMinutes < endMinutes;
+  },
+
+  // Lấy trạng thái của một buổi học: 'completed' | 'ongoing' | 'upcoming'
+  getSessionStatus(session, currentDateTime = new Date()) {
+    if (this.isSessionOngoing(session, currentDateTime)) return 'ongoing';
+    if (this.isSessionCompleted(session, currentDateTime)) return 'completed';
+    return 'upcoming';
+  },
+
+  // Lấy tổng số buổi đã hoàn thành của toàn khóa hoặc theo môn
+  getCompletedSessionsCount(subjectId = null, currentDateTime = new Date()) {
+    let list = SCHEDULE_SESSIONS;
+    if (subjectId) {
+      list = list.filter(s => s.subjectId === subjectId);
+    }
+    return list.filter(s => this.isSessionCompleted(s, currentDateTime)).length;
+  },
+
+  // Lấy thông tin số thứ tự của buổi học trong môn và trong toàn kỳ
+  getSessionOrderInfo(sessionId) {
+    const session = SCHEDULE_SESSIONS.find(s => s.id === sessionId);
+    if (!session) return null;
+    const subSessions = this.getSessionsBySubject(session.subjectId);
+    const indexInSub = subSessions.findIndex(s => s.id === sessionId) + 1;
+    const indexInAll = SCHEDULE_SESSIONS.findIndex(s => s.id === sessionId) + 1;
+    return {
+      indexInSub,
+      totalInSub: subSessions.length,
+      indexInAll,
+      totalInAll: SCHEDULE_SESSIONS.length
+    };
+  },
+
   // Tìm buổi học tiếp theo tính từ một mốc thời gian
   getNextSession(currentDateObj = new Date()) {
     const currentDateStr = this.formatLocalDate(currentDateObj);
